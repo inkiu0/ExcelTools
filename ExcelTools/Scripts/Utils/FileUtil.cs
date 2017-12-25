@@ -11,6 +11,14 @@ class FileUtil
         return files;
     }
 
+    public static List<string> CollectFolderExceptExt(string folder, string ext)
+    {
+        List<string> files = new List<string>();
+        if (Directory.Exists(folder))
+            CollectFileExceptExts(ref files, folder, new List<string>() { ext }, true, folder);
+        return files;
+    }
+
     public static List<string> CollectAllFolders(List<string> folders, string ext)
     {
         List<string> files = new List<string>();
@@ -42,6 +50,31 @@ class FileUtil
         for (int i = 0; i < files.Length; i++)
         {
             if (exts.Contains(files[i].Extension.ToLower()))//e.g ".txt"
+            {
+                string fpath = ppath + files[i].Name;
+                if (!string.IsNullOrEmpty(fpath))
+                    fileList.Add(fpath);
+            }
+        }
+
+        if (recursive)
+        {
+            foreach (var sub in dir.GetDirectories())
+            {
+                CollectFile(ref fileList, folder + sub.Name, exts, recursive, ppath + sub.Name);
+            }
+        }
+    }
+
+    public static void CollectFileExceptExts(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "")
+    {
+        folder = AppendSlash(folder);
+        ppath = AppendSlash(ppath);
+        DirectoryInfo dir = new DirectoryInfo(folder);
+        FileInfo[] files = dir.GetFiles();
+        for (int i = 0; i < files.Length; i++)
+        {
+            if (!exts.Contains(files[i].Extension.ToLower()))//e.g ".txt"
             {
                 string fpath = ppath + files[i].Name;
                 if (!string.IsNullOrEmpty(fpath))

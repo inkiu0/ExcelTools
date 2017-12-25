@@ -8,12 +8,6 @@ using NPOI.SS.UserModel;
 
 class ExcelParser
 {
-    string target_temp_table_path = "luas";
-    string target_server_table_path = "../Lua/Table";
-    string target_client_table_path = "../../client-refactory/Develop/Assets/Resources/Script/Config";
-    string target_client_other_path = "../../client-refactory/Develop/Assets/Resources/Script/MConfig";
-    string target_client_other_path_old = "../../client-refactory/Develop/Assets/Resources/Script/FrameWork/Config";
-    string target_client_script_path = "../../client-refactory/Develop/Assets/Resources/Script/";
     public ExcelParser(string file)
     {
         Application app = new Application();
@@ -35,11 +29,6 @@ class ExcelParser
 
     public static void ParseAll()
     {
-
-    }
-
-    private void svn_update(string path, params string[] args)
-    {
-        SVNHelper.update(path);
+        SVNHelper.update("D:/RO/ROTrunk/Cehua/Table/luas");
     }
 }
