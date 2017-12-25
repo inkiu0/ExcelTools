@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace ExcelTools
 {
@@ -23,6 +17,49 @@ namespace ExcelTools
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        CollectionViewSource view = new CollectionViewSource();
+        ObservableCollection<ExcelFileListItem> _ExcelFiles = new ObservableCollection<ExcelFileListItem>();
+        List<string> _Folders = new List<string>(){
+            "D:/RO/ROTrunk/Cehua/Table/serverexcel",
+            "D:/RO/ROTrunk/Cehua/Table/SubConfigs"
+        };
+        const string _Ext = ".xlsx";
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            List<string> files = FileUtil.CollectAllFolders(_Folders, _Ext);
+            for (int i = 0; i < files.Count; i++)
+            {
+                _ExcelFiles.Add(new ExcelFileListItem()
+                {
+                    Name = Path.GetFileNameWithoutExtension(files[i]),
+                    Status = "C/S",
+                    ClientServer = "C/S",
+                    FilePath = files[i]
+                });
+            }
+
+            view.Source = _ExcelFiles;
+            this.fileListView.DataContext = view;
+            this.fileListView.MouseDoubleClick += FileListView_MouseDoubleClick;
+        }
+
+        private void FileListView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            ListView listView = sender as ListView;
+            ExcelFileListItem item = listView.SelectedItem as ExcelFileListItem;
+            Stopwatch sw = new Stopwatch();
+            Excel excel = Excel.Parse(item.FilePath);
+            for (int i = 0; i < 1000; i++)
+            {
+                GC.Collect();
+                sw.Start();
+                string tmp = excel.ToString();
+                sw.Stop();
+                GC.Collect();
+            }
+            Console.WriteLine((sw.Elapsed.TotalMilliseconds / 1000.0f).ToString());
         }
     }
 }

@@ -5,8 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ExcelTools"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800">
+        Title="配置表工具" Height="600" Width="800" Loaded="Window_Loaded">
     <Grid>
-        
+        <ListView Margin="18,10,20,25" Name="fileListView" ItemsSource="{Binding}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150"/>
+                    <GridViewColumn Header="C/S" DisplayMemberBinding="{Binding ClientServer}" Width="100"/>
+                    <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Status}" Width="50"/>
+                    <GridViewColumn Header="Path" DisplayMemberBinding="{Binding FilePath}" Width="500"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
     </Grid>
 </Window>
