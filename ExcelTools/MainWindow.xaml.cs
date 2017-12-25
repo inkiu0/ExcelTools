@@ -49,17 +49,9 @@ namespace ExcelTools
         {
             ListView listView = sender as ListView;
             ExcelFileListItem item = listView.SelectedItem as ExcelFileListItem;
-            Stopwatch sw = new Stopwatch();
             Excel excel = Excel.Parse(item.FilePath);
-            for (int i = 0; i < 1000; i++)
-            {
-                GC.Collect();
-                sw.Start();
-                string tmp = excel.ToString();
-                sw.Stop();
-                GC.Collect();
-            }
-            Console.WriteLine((sw.Elapsed.TotalMilliseconds / 1000.0f).ToString());
+            string tmp = excel.ToString();
+            SVNHelper.update("D:/RO/ROTrunk/Cehua/Table/luas");
         }
     }
 }

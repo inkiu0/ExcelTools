@@ -77,7 +77,9 @@
     <Compile Include="Scripts\ExcelParser\Excel.cs" />
     <Compile Include="Scripts\ExcelParser\ZipFile.cs" />
     <Compile Include="Scripts\UI\ExcelFileListItem.cs" />
+    <Compile Include="Scripts\Utils\CommandHelper.cs" />
     <Compile Include="Scripts\Utils\FileUtil.cs" />
+    <Compile Include="Scripts\Utils\SVNHelper.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
