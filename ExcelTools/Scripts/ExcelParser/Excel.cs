@@ -12,7 +12,7 @@ public class Excel
     public bool isServerTable = false;
     private List<PropertyInfo> _Properties = new List<PropertyInfo>();
     private int _PropertyNums = -1;
-    private string tableName = string.Empty;
+    public string tableName { get; private set; };
     private int m_nPropertyNums
     {
         get

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Collections.Generic;
+using System;
 
 class FileUtil
 {
@@ -7,7 +8,7 @@ class FileUtil
     {
         List<string> files = new List<string>();
         if (Directory.Exists(folder))
-            CollectFile(ref files, folder, new List<string>() { ext }, true, folder);
+            CollectFile(ref files, folder, new List<string>() { ext }, true);
         return files;
     }
 
@@ -15,7 +16,7 @@ class FileUtil
     {
         List<string> files = new List<string>();
         if (Directory.Exists(folder))
-            CollectFileExceptExts(ref files, folder, new List<string>() { ext }, true, folder);
+            CollectFileExceptExts(ref files, folder, new List<string>() { ext }, true);
         return files;
     }
 
@@ -25,8 +26,16 @@ class FileUtil
         for (int i = 0; i < folders.Count; i++)
         {
             if (Directory.Exists(folders[i]))
-                CollectFile(ref files, folders[i], new List<string>() { ext }, true, folders[i]);
+                CollectFile(ref files, folders[i], new List<string>() { ext }, true);
         }
+        return files;
+    }
+
+    public static List<string> CollectFolder(string folder, string ext, Action<string, string, string> match)
+    {
+        List<string> files = new List<string>();
+        if (Directory.Exists(folder))
+            CollectFile(ref files, folder, new List<string>() { ext }, true, "", match);
         return files;
     }
 
@@ -36,12 +45,12 @@ class FileUtil
         for (int i = 0; i < folders.Count; i++)
         {
             if (Directory.Exists(folders[i]))
-                CollectFile(ref files, folders[i], exts, true, folders[i]);
+                CollectFile(ref files, folders[i], exts, true);
         }
         return files;
     }
 
-    public static void CollectFile(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "")
+    public static void CollectFile(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "", Action<string, string, string> match = null)
     {
         folder = AppendSlash(folder);
         ppath = AppendSlash(ppath);
@@ -51,9 +60,12 @@ class FileUtil
         {
             if (exts.Contains(files[i].Extension.ToLower()))//e.g ".txt"
             {
-                string fpath = ppath + files[i].Name;
+                string fpath = folder + files[i].Name;
                 if (!string.IsNullOrEmpty(fpath))
+                {
                     fileList.Add(fpath);
+                    match?.Invoke(fpath, ppath, files[i].Name);
+                }
             }
         }
 
@@ -76,7 +88,7 @@ class FileUtil
         {
             if (!exts.Contains(files[i].Extension.ToLower()))//e.g ".txt"
             {
-                string fpath = ppath + files[i].Name;
+                string fpath = folder + files[i].Name;
                 if (!string.IsNullOrEmpty(fpath))
                     fileList.Add(fpath);
             }

@@ -8,8 +8,8 @@ public class ExcelParserFileHelper
 
     string target_temp_table_path = "luas";
     string target_server_table_path = "../Lua/Table";
-    string target_client_table_path = "../../client-refactory/Develop/Assets/Resources/Script/Config";
-    string target_client_other_path = "../../client-refactory/Develop/Assets/Resources/Script/MConfig";
+    static string target_client_table_path = "../../client-refactory/Develop/Assets/Resources/Script/Config";
+    static string target_client_other_path = "../../client-refactory/Develop/Assets/Resources/Script/MConfig";
     string target_client_other_path_old = "../../client-refactory/Develop/Assets/Resources/Script/FrameWork/Config";
     string target_client_script_path = "../../client-refactory/Develop/Assets/Resources/Script/";
 
@@ -32,10 +32,9 @@ public class ExcelParserFileHelper
         return donot_copy_files.IndexOf(fname) > -1;
     }
 
-    public static string GenTargetFile(string path)
+    public static string GenTargetFilePath(string path)
     {
-        string tmp = string.Empty;
-        return tmp;
+        return Path.Combine(target_client_table_path, path);
     }
 
     private static void RemoveAllFileExceptMeta(string root)
