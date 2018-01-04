@@ -49,9 +49,9 @@ namespace ExcelTools
         {
             ListView listView = sender as ListView;
             ExcelFileListItem item = listView.SelectedItem as ExcelFileListItem;
-            Excel excel = Excel.Parse(item.FilePath);
-            string tmp = excel.ToString();
-            ExcelParserFileHelper.GenTargetFilePath("C:/Users/sh/Desktop/map.txt");
+            //Excel excel = Excel.Parse(item.FilePath, false);
+            //string tmp = excel.ToString();
+            ExcelParser.ParseAll();
         }
     }
 }

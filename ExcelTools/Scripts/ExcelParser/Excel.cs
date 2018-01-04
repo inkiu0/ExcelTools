@@ -4,6 +4,11 @@ using System.Collections.Generic;
 using System.IO;
 using NPOI.XSSF.UserModel;
 using System.Text;
+using System.Text.RegularExpressions;
+using NPOI.HSSF.UserModel;
+using NPOI.OpenXml4Net.OPC;
+using NPOI.POIFS.FileSystem;
+using System.Data;
 
 public class Excel
 {
@@ -12,7 +17,10 @@ public class Excel
     public bool isServerTable = false;
     private List<PropertyInfo> _Properties = new List<PropertyInfo>();
     private int _PropertyNums = -1;
-    public string tableName { get; private set; };
+    public string tableName { get; private set; }
+    public string path { get; private set; }
+    bool _Success = false;
+    public bool success { get { return _Success; } }
     private int m_nPropertyNums
     {
         get
@@ -23,7 +31,7 @@ public class Excel
                 return _PropertyNums;
             }
             if(_PropertyNums < 0)
-                _PropertyNums = Math.Min(mainSheet.GetRow(0).LastCellNum, Math.Min(mainSheet.GetRow(1).LastCellNum, mainSheet.GetRow(2).LastCellNum));
+                _PropertyNums = Math.Min(RowCropNullCell(mainSheet.GetRow(0)), Math.Min(RowCropNullCell(mainSheet.GetRow(1)), RowCropNullCell(mainSheet.GetRow(2))));
             return _PropertyNums;
         }
     }
@@ -33,15 +41,17 @@ public class Excel
         mainSheet = sheet;
     }
 
-    public static Excel Parse(string file)
+    public static Excel Parse(string file, bool _IsServer)
     {
         ISheet sheet = GetMainSheet(file);
         if (sheet != null)
         {
             Excel excel = new Excel(sheet);
+            excel.path = file;
+            excel.isServerTable = _IsServer;
+            excel.SetTableName(file);
             excel.ParsePropertyInfos();
             excel.ParseExcelContents();
-            excel.SetTableName(file);
             return excel;
         }
         return null;
@@ -49,6 +59,7 @@ public class Excel
 
     public override string ToString()
     {
+        if (!success) return string.Empty;
         //用+号拼接的字符串分开Add可以略微提升性能，几毫秒级别，为了可读性不做优化。
         List<string> strList = new List<string>();
         strList.Add(tableName + "= {\n");
@@ -59,22 +70,34 @@ public class Excel
             else
                 strList.Add("\t" + rows[i].ToString() + ",\n");
         }
-        strList.Add("}\nreturn" + tableName);
+        strList.Add("}\nreturn " + tableName);
         return string.Concat(strList.ToArray());
     }
 
     static ISheet GetMainSheet(string file)
     {
-        FileStream fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
-        IWorkbook workbook = new XSSFWorkbook(fileStream);
-        ISheet sheet = workbook.GetSheetAt(0);
+        ISheet sheet = null;
+        using (FileStream fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
+        {
+            var fileExt = Path.GetExtension(file);
+            if (fileExt == ".xls")
+            {
+                HSSFWorkbook hssfwb = new HSSFWorkbook(fileStream);
+                sheet = hssfwb.GetSheetAt(0);
+            }
+            else
+            {
+                XSSFWorkbook xssfwb = new XSSFWorkbook(fileStream);
+                sheet = xssfwb.GetSheetAt(0);
+            }
+        }
         return sheet;
     }
 
     private void SetTableName(string filePath)
     {
         string filename = Path.GetFileNameWithoutExtension(filePath);
-        filename = filename.Replace("_", "");
+        filename = Regex.Replace(filename, "[^a-zA-Z0-9_]", "_");
         tableName = string.Format("Table_{0}", filename);
     }
 
@@ -87,12 +110,44 @@ public class Excel
         IRow _DataTypeRow = mainSheet.GetRow(3);
         for (int i = 0; i < m_nPropertyNums; i++)
         {
-            _Properties.Add(new PropertyInfo(_IsServerRow.GetCell(i), _CnameRow.GetCell(i), _EnameRow.GetCell(i), _DataTypeRow.GetCell(i)));
+            string _Ename = Regex.Replace(GetCellStr(_EnameRow, i), "[^a-zA-Z0-9_]", "_");
+            string _DataType = Regex.Replace(GetCellStr(_DataTypeRow, i), "[^a-zA-Z0-9_]", "_");
+            if (!Regex.IsMatch(_Ename, "[a-zA-Z]"))
+            {
+                _Success = false;
+                Console.Error.WriteLine(string.Format("path = {0}的Excel文件第3行第{1}列不含有字母！", path, i));
+                return;
+            }
+            if (i == 0)
+                _Ename = "id";
+            _Properties.Add(new PropertyInfo(GetCellStr(_IsServerRow, i), GetCellStr(_CnameRow, i), _Ename, _DataType));
+            _Success = true;
         }
+    }
+
+    private string GetCellStr(IRow row, int idx)
+    {
+        string ret = string.Empty;
+        if (row.Cells.Count > idx)
+            ret = row.Cells[idx].ToString();
+        return ret;
+    }
+
+    private int RowCropNullCell(IRow row)
+    {
+        int count = row.Cells.Count;
+        int idx = count - 1;
+        while(string.IsNullOrEmpty(row.Cells[count - 1].ToString()))
+        {
+            row.Cells.RemoveAt(count - 1);
+            count--;
+        }
+        return count;
     }
 
     private void ParseExcelContents()
     {
+        if (!success) return;
         for (int i = 4; i < mainSheet.LastRowNum; i++)
         {
             IRow row = mainSheet.GetRow(i);
@@ -108,11 +163,8 @@ public class Excel
         ExcelRow row = new ExcelRow(idx, this);
         for (int i = 0; i < m_nPropertyNums; i++)
         {
-            if (i < r.LastCellNum)
-            {
-                ExcelCell c = ParseExcelCell(r.GetCell(i), _Properties[i], row);
-                row.AppendCell(c);
-            }
+            ExcelCell c = ParseExcelCell(r.GetCell(i), _Properties[i], row);
+            row.AppendCell(c);
         }
         return row;
     }

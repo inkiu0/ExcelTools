@@ -73,7 +73,7 @@ class FileUtil
         {
             foreach (var sub in dir.GetDirectories())
             {
-                CollectFile(ref fileList, folder + sub.Name, exts, recursive, ppath + sub.Name);
+                CollectFile(ref fileList, folder + sub.Name, exts, recursive, ppath + sub.Name, match);
             }
         }
     }
@@ -113,5 +113,12 @@ class FileUtil
         if (idx == path.Length - 1)
             return path;
         return path + "/";
+    }
+
+    public static string PathCombine(params string[] paths)
+    {
+        var path = Path.Combine(paths);
+        path = path.Replace(Path.DirectorySeparatorChar, '/');
+        return path;
     }
 }

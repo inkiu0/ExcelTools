@@ -20,31 +20,31 @@ public class ExcelCell
 
     public override string ToString()
     {
-        return propertyInfo.ename + " = " + getvalue();
+        return propertyInfo.ename + " = " + GetValue();
         //return string.Format("{0} = {1}", propertyInfo.ename, getvalue());
     }
 
-    private string getvalue()
+    public string GetValue()
     {
         //C#中拼接字符串，固定表达式a + b + c会被优化成string.Concat(new string[]{ a, b, c })
         //性能最好
-        string tmp = string.Empty;
+        string ret = string.Empty;
         switch (propertyInfo.type)
         {
             case "number":
                 int n;
                 float f;
                 if (!string.IsNullOrEmpty(content) && int.TryParse(content, out n))
-                    tmp = n.ToString();
+                    ret = n.ToString();
                 else if (content.IndexOf('.') > 0 && float.TryParse(content, out f))
-                    tmp = f.ToString();
+                    ret = f.ToString();
                 else
-                    tmp = "nil";
+                    ret = "nil";
                 break;
             case "string":
-                tmp = content.Replace(@"\\", @"\\\\");
-                tmp = tmp.Replace(@"\\\\n", @"\\n");
-                tmp = "'" + tmp + "'";
+                ret = content.Replace(@"\\", @"\\\\");
+                ret = ret.Replace(@"\\\\n", @"\\n");
+                ret = "'" + ret + "'";
                 //tmp = string.Format("'{0}'", tmp);
                 break;
             case "bittable":
@@ -56,19 +56,19 @@ public class ExcelCell
                     if(int.TryParse(bits[i].Trim(), out bit))
                         num += 1 << (bit - 1);
                 }
-                tmp = num.ToString();
+                ret = num.ToString();
                 break;
             case "table":
                 if (!parent.parent.isServerTable && string.IsNullOrEmpty(content))
-                    tmp = "_EmptyTable";
+                    ret = "_EmptyTable";
                 else
-                    tmp = "{" + content + "}";
+                    ret = "{" + content + "}";
                     //tmp = string.Format("{{{0}}}", content);
                 break;
             default:
-                tmp = "nil";
+                ret = "nil";
                 break;
         }
-        return tmp;
+        return ret;
     }
 }

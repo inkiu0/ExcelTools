@@ -1,10 +1,10 @@
 ﻿using System.IO;
-using Microsoft.Office.Core;
-using Microsoft.Office.Interop.Excel;
-using System.Reflection;
 using System.Collections.Generic;
 using NPOI.XSSF.UserModel;
 using NPOI.SS.UserModel;
+using System.Data.OleDb;
+using System.Data;
+using System;
 
 class ExcelParser
 {
@@ -12,23 +12,32 @@ class ExcelParser
             "D:/RO/ROTrunk/Cehua/Table/serverexcel",
             "D:/RO/ROTrunk/Cehua/Table/SubConfigs"
     };
-    static string _Ext = ".xlsx";
+    static string _ExcelExt = ".xlsx";
     static string _ClientExt = ".txt";
     static string _ServerExt = ".lua";
-    static string source_path = "D:/RO/ROTrunk/Cehua/Table/luas";
+    static string _TableImportPath = "Table.txt";
+    static string source_path = "D:/RO/ROTrunk/Cehua/Table";
     static string target_server_table_path = "../Lua/Table";
     static string target_client_table_path = "../../client-refactory/Develop/Assets/Resources/Script/Config";
 
-    public ExcelParser(string file)
+    static List<string> _NeedImportClient = new List<string>();
+    static List<string> _NeedImportServer = new List<string>();
+
+    static ExcelParser instance
     {
-        Application app = new Application();
-        _Workbook wb = app.Workbooks.Add(file);
-        List<Worksheet> sheets = new List<Worksheet>();
-        for (int i = 0; i < wb.Sheets.Count; i++)
-        {
-            sheets.Add(wb.Sheets[i] as Worksheet);
-        }
+        get { return new ExcelParser(); }
     }
+
+    //public ExcelParser(string file)
+    //{
+    //    Application app = new Application();
+    //    _Workbook wb = app.Workbooks.Add(file);
+    //    List<Worksheet> sheets = new List<Worksheet>();
+    //    for (int i = 0; i < wb.Sheets.Count; i++)
+    //    {
+    //        sheets.Add(wb.Sheets[i] as Worksheet);
+    //    }
+    //}
 
     public static IWorkbook Parse(string file)
     {
@@ -41,9 +50,14 @@ class ExcelParser
     public static void ParseAll()
     {
         SVNHelper.update(source_path);
-        List<string> files = FileUtil.CollectFolder(source_path, _Ext, MatchExcelFile);
-        for (int i = 0; i < files.Count; i++)
-        {
+        _NeedImportClient.Clear();
+        _NeedImportServer.Clear();
+        List<string> files = FileUtil.CollectFolder(source_path, _ExcelExt, instance.MatchExcelFile);
+        #region 生成Table.txt的Client和Server版本
+        GenTableImportFile();
+        #endregion
+        //for (int i = 0; i < files.Count; i++)
+        //{
             //_ExcelFiles.Add(new ExcelFileListItem()
             //{
             //    Name = Path.GetFileNameWithoutExtension(files[i]),
@@ -51,34 +65,149 @@ class ExcelParser
             //    ClientServer = "C/S",
             //    FilePath = files[i]
             //});
-        }
+        //}
     }
 
-    private static void GenServerVersion(Excel excel, string relativeDir, string fileNameContainExt)
+    private static void GenServerVersion(Excel excel, string targetPath, string md5)
     {
-        string fname = excel.tableName + _ServerExt;
-        string tmp = excel.ToString();
-        using (StreamWriter sw = File.CreateText(Path.Combine(source_path, target_server_table_path, fname)))
+        string contents = "--md5:" + md5 + "\n";
+        contents += excel.ToString();
+        WriteTextFile(contents, targetPath);
+    }
+
+    private static void GenClientVersion(Excel excel, string targetPath, string md5)
+    {
+        string contents = "--md5:" + md5 + "\n";
+        contents += excel.ToString();
+        WriteTextFile(contents, targetPath);
+    }
+
+    private void MatchExcelFile(string path, string relativeDir, string fileNameContainExt)
+    {
+        string excelmd5 = ExcelParserFileHelper.GetMD5HashFromFile(path);
+        string tempPath = ExcelParserFileHelper.GetTempLuaPath(path, true);
+
+        #region 生成一份服务器的配置
+        if (!ExcelParserFileHelper.IsSameFileMD5(tempPath, excelmd5))
         {
-            sw.Write(tmp);
+            Excel excel = Excel.Parse(path, true);
+            if (excel.success)
+                GenServerVersion(excel, tempPath, excelmd5);
         }
-    }
-
-    private static void GenClientVersion(Excel excel, string relativeDir, string fileNameContainExt)
-    {
-        string fname = excel.tableName + _ClientExt;
-        string tmp = excel.ToString();
-        using (StreamWriter sw = File.CreateText(Path.Combine(source_path, target_client_table_path, relativeDir, fname)))
-        {
-            sw.Write(tmp);
-        }
-    }
-
-    private static void MatchExcelFile(string path, string relativeDir, string fileNameContainExt)
-    {
-        Excel excel = Excel.Parse(path);
+        #endregion
+        #region 客户端的Excel生成一份客户端的配置
         if (relativeDir.IndexOf("serverexcel") < 0)
-            GenClientVersion(excel, relativeDir, fileNameContainExt);
-        GenServerVersion(excel, relativeDir, fileNameContainExt);
+        {
+            tempPath = ExcelParserFileHelper.GetTempLuaPath(path, false);
+            if(!ExcelParserFileHelper.IsSameFileMD5(tempPath, excelmd5))
+            {
+                Excel excel = Excel.Parse(path, false);
+                if (excel.success)
+                    GenClientVersion(excel, tempPath, excelmd5);
+            }
+            if(NeedAutoImport(path))
+                _NeedImportClient.Add(Path.GetFileNameWithoutExtension(tempPath));
+        }
+        if (NeedAutoImport(path))
+            _NeedImportServer.Add(Path.GetFileNameWithoutExtension(tempPath));
+        #endregion
+    }
+
+    static bool NeedAutoImport(string path)
+    {
+        return path.IndexOf("not_import") < 0 && path.IndexOf("Debug") < 0;
+    }
+
+    static void GenTableImportFile()
+    {
+        _NeedImportClient.Add("Table_MenuUnclock");
+        string server = string.Empty;
+        string client = "local _DisableWriteTable = {\n\t__newindex = function ()\n\t\terror(\"Attemp to modify read-only table\")\n\tend\n}\n_EmptyTable = {}\nsetmetatable(_EmptyTable, _DisableWriteTable)\n_DisableWriteTable.__metatable = false\n\n";
+        if (_NeedImportServer.Count > 0)
+        {
+            for (int i = 0; i < _NeedImportServer.Count; i++)
+            {
+                if (!_NeedImportServer[i].EndsWith("_server"))
+                    server += "autoImport('" + _NeedImportServer[i] + "') \n";
+            }
+            WriteTableImportFile(server);
+        }
+        if (_NeedImportClient.Count > 0)
+        {
+            for (int i = 0; i < _NeedImportClient.Count; i++)
+            {
+                if (!_NeedImportClient[i].EndsWith("_server"))
+                    client += "autoImport('" + _NeedImportClient[i] + "') \n";
+            }
+            WriteTableImportFile(client, false);
+        }
+        _NeedImportServer.Clear();
+        _NeedImportClient.Clear();
+    }
+
+    static void WriteTableImportFile(string contents, bool isServer = true)
+    {
+        string path = ExcelParserFileHelper.GetTempLuaPath(_TableImportPath, isServer);
+        WriteTextFile(contents, path);
+    }
+
+    static void WriteTextFile(string contents, string path)
+    {
+        string dir = Path.GetDirectoryName(path);
+        if (!Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+        using (StreamWriter sw = File.CreateText(path))
+        {
+            sw.Write(contents);
+        }
+    }
+    public static DataTable GetExcelTableByOleDB(string path)
+    {
+        try
+        {
+            DataTable dtExcel = new DataTable();
+            //数据表
+            DataSet ds = new DataSet();
+            //获取文件扩展名
+            string fext = Path.GetExtension(path);
+            string fname = Path.GetFileName(path);
+            //Excel的连接
+            OleDbConnection objConn = null;
+            switch (fext)
+            {
+                case ".xls":
+                    objConn = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + path + ";" + "Extended Properties=\"Excel 8.0;HDR=NO;IMEX=1;\"");
+                    break;
+                case ".xlsx":
+                    objConn = new OleDbConnection("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + path + ";" + "Extended Properties=\"Excel 12.0;HDR=NO;IMEX=1;\"");
+                    break;
+                default:
+                    objConn = null;
+                    break;
+            }
+            if (objConn == null)
+            {
+                return null;
+            }
+            objConn.Open();
+            //获取Excel中所有Sheet表的信息
+            System.Data.DataTable schemaTable = objConn.GetOleDbSchemaTable(System.Data.OleDb.OleDbSchemaGuid.Tables, null);
+            //获取Excel的第一个Sheet表名
+            string tableName = schemaTable.Rows[0][2].ToString().Trim();
+            string sqlcmd = "select * from [" + tableName + "]";
+            //获取Excel指定Sheet表中的信息
+            OleDbCommand objCmd = new OleDbCommand(sqlcmd, objConn);
+            OleDbDataAdapter data = new OleDbDataAdapter(sqlcmd, objConn);
+            data.Fill(ds, tableName);//填充数据
+            objConn.Close();
+            //dtExcel即为excel文件中指定表中存储的信息
+            dtExcel = ds.Tables[tableName];
+            return dtExcel;
+        }
+        catch(Exception e)
+        {
+            string error = e.ToString();
+            return null;
+        }
     }
 }

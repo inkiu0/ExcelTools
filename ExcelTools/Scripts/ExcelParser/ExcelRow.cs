@@ -21,14 +21,15 @@ public class ExcelRow
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
-        sb.AppendFormat("[{0}] = {{ ", index.ToString());
-        string tmp = string.Format("[{0}] = {{ ", index.ToString());
         for(int i = 0; i < cells.Count; i++)
         {
+            if(i == 0)
+                sb.AppendFormat("[{0}] = {{", cells[i].GetValue());
             if (i != cells.Count - 1)
                 sb.AppendFormat("{0}, ", cells[i].ToString());
+            else
+                sb.AppendFormat("{0}}}", cells[i].ToString());
         }
-        sb.Append(" }}");
         return sb.ToString();
     }
 }

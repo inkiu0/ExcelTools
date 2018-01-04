@@ -19,11 +19,11 @@ public class PropertyInfo
     /// </summary>
     public string type;
 
-    public PropertyInfo(ICell row0, ICell row1, ICell row2, ICell row3)
+    public PropertyInfo(string row0, string row1, string row2, string row3)
     {
-        isServerProperty = row0.ToString() == "1";
-        cname = row1.ToString();
-        ename = row2.ToString();
-        type = row3.ToString();
+        isServerProperty = row0 == "1";
+        cname = row1;
+        ename = row2;
+        type = row3;
     }
 }
