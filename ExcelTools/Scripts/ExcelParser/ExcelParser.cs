@@ -91,7 +91,7 @@ class ExcelParser
         if (!ExcelParserFileHelper.IsSameFileMD5(tempPath, excelmd5))
         {
             Excel excel = Excel.Parse(path, true);
-            if (excel.success)
+            if (excel != null && excel.success)
                 GenServerVersion(excel, tempPath, excelmd5);
         }
         #endregion
@@ -102,7 +102,7 @@ class ExcelParser
             if(!ExcelParserFileHelper.IsSameFileMD5(tempPath, excelmd5))
             {
                 Excel excel = Excel.Parse(path, false);
-                if (excel.success)
+                if (excel != null && excel.success)
                     GenClientVersion(excel, tempPath, excelmd5);
             }
             if(NeedAutoImport(path))

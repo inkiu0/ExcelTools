@@ -87,8 +87,12 @@ public class Excel
             }
             else
             {
-                XSSFWorkbook xssfwb = new XSSFWorkbook(fileStream);
-                sheet = xssfwb.GetSheetAt(0);
+                try
+                {
+                    XSSFWorkbook xssfwb = new XSSFWorkbook(fileStream);
+                    sheet = xssfwb.GetSheetAt(0);
+                }
+                catch(Exception e) { Console.Error.WriteLine("Path = " + file + "\n" + e.ToString()); }
             }
         }
         return sheet;
