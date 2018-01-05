@@ -79,21 +79,23 @@ public class Excel
         ISheet sheet = null;
         using (FileStream fileStream = new FileStream(file, FileMode.Open, FileAccess.Read))
         {
-            var fileExt = Path.GetExtension(file);
-            if (fileExt == ".xls")
+            try
             {
-                HSSFWorkbook hssfwb = new HSSFWorkbook(fileStream);
-                sheet = hssfwb.GetSheetAt(0);
+                sheet = WorkbookFactory.Create(fileStream).GetSheetAt(0);
             }
-            else
+            catch (Exception e)
             {
-                try
-                {
-                    XSSFWorkbook xssfwb = new XSSFWorkbook(fileStream);
-                    sheet = xssfwb.GetSheetAt(0);
-                }
-                catch(Exception e) { Console.Error.WriteLine("Path = " + file + "\n" + e.ToString()); }
+                Console.Error.WriteLine("Path = " + file + "\n" + e.ToString());
             }
+            //var fileExt = Path.GetExtension(file);
+            //if (fileExt == ".xls")
+            //{
+            //    HSSFWorkbook hssfwb = new HSSFWorkbook(fileStream);
+            //    sheet = hssfwb.GetSheetAt(0);
+            //}
+            //else
+            //{
+            //}
         }
         return sheet;
     }
