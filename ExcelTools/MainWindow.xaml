@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="配置表工具" Height="600" Width="800" Loaded="Window_Loaded">
     <Grid>
-        <ListView Margin="18,10,20,25" Name="fileListView" ItemsSource="{Binding}">
+        <ListView Margin="18,10,20,70" Name="fileListView" ItemsSource="{Binding}">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150"/>
@@ -17,6 +17,8 @@
                 </GridView>
             </ListView.View>
         </ListView>
+        <Button Content="检查状态" Click ="CheckStateBtn_Click" Name ="checkStateBtn" HorizontalAlignment="Right" Margin="0,0,20,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
+        <Button Content="功能" Click ="MultiFuncBtn_Click" Name="multiFuncBtn" HorizontalAlignment="Right" Margin="0,0,158,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
 
     </Grid>
 </Window>
