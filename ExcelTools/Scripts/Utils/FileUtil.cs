@@ -20,13 +20,13 @@ class FileUtil
         return files;
     }
 
-    public static List<string> CollectAllFolders(List<string> folders, string ext)
+    public static List<string> CollectAllFolders(List<string> folders, string ext, Boolean collectHidden = false)
     {
         List<string> files = new List<string>();
         for (int i = 0; i < folders.Count; i++)
         {
             if (Directory.Exists(folders[i]))
-                CollectFile(ref files, folders[i], new List<string>() { ext }, true);
+                CollectFile(ref files, folders[i], new List<string>() { ext }, true, "", collectHidden);
         }
         return files;
     }
@@ -35,7 +35,7 @@ class FileUtil
     {
         List<string> files = new List<string>();
         if (Directory.Exists(folder))
-            CollectFile(ref files, folder, new List<string>() { ext }, true, "", match);
+            CollectFile(ref files, folder, new List<string>() { ext }, true, "", false,match);
         return files;
     }
 
@@ -50,7 +50,7 @@ class FileUtil
         return files;
     }
 
-    public static void CollectFile(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "", Action<string, string, string> match = null)
+    public static void CollectFile(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "", Boolean collectHidden = false, Action<string, string, string> match = null)
     {
         folder = AppendSlash(folder);
         ppath = AppendSlash(ppath);
@@ -63,8 +63,11 @@ class FileUtil
                 string fpath = folder + files[i].Name;
                 if (!string.IsNullOrEmpty(fpath))
                 {
-                    fileList.Add(fpath);
-                    match?.Invoke(fpath, ppath, files[i].Name);
+                    FileAttributes attributes = File.GetAttributes(fpath);
+                    if(!( ((attributes & FileAttributes.Hidden) == FileAttributes.Hidden) ^ collectHidden) ){
+                        fileList.Add(fpath);
+                        match?.Invoke(fpath, ppath, files[i].Name);
+                    }
                 }
             }
         }
@@ -73,7 +76,7 @@ class FileUtil
         {
             foreach (var sub in dir.GetDirectories())
             {
-                CollectFile(ref fileList, folder + sub.Name, exts, recursive, ppath + sub.Name, match);
+                CollectFile(ref fileList, folder + sub.Name, exts, recursive, ppath + sub.Name, collectHidden, match);
             }
         }
     }
@@ -100,6 +103,69 @@ class FileUtil
             {
                 CollectFile(ref fileList, folder + sub.Name, exts, recursive, ppath + sub.Name);
             }
+        }
+    }
+
+    public static bool RenameFile(string filePath, string rename)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                string aimPath = filePath.Remove(filePath.LastIndexOf('/') + 1) + rename;
+                File.Move(filePath, aimPath);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        catch(IOException e)
+        {
+            Console.WriteLine(e.Message);
+            return false;
+        }
+    }
+
+    public static void SetHidden(string path,Boolean doHidden = false)
+    {
+        if(doHidden)
+            File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.Hidden);
+        else
+            File.SetAttributes(path, File.GetAttributes(path) & ~FileAttributes.Hidden);
+    }
+
+    public static void DeleteHiddenFile(List<string> floders, string ext)
+    {
+        List<string> hiddenFiles = CollectAllFolders(floders, ext, true);
+        for(int i = 0; i < hiddenFiles.Count; i++)
+        {
+            if (File.Exists(hiddenFiles[i]))
+            {
+                try
+                {
+                    File.Delete(hiddenFiles[i]);
+                }
+                catch(IOException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+        }
+    }
+
+    //抢占式
+    public static void OpenFile(string path)
+    {
+        string output = SVNHelper.Lock(path, "请求锁定" + path);
+        if (output.Contains("warning"))
+        {
+            return;
+        }
+        else
+        {
+            System.Diagnostics.Process.Start(path);
         }
     }
 
