@@ -49,7 +49,7 @@ class ExcelParser
 
     public static void ParseAll()
     {
-        SVNHelper.update(source_path);
+        SVNHelper.Update(source_path);
         _NeedImportClient.Clear();
         _NeedImportServer.Clear();
         List<string> files = FileUtil.CollectFolder(source_path, _ExcelExt, instance.MatchExcelFile);

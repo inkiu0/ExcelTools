@@ -1,4 +1,5 @@
 ﻿using NPOI.SS.UserModel;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -29,6 +30,18 @@ public class ExcelRow
                 sb.AppendFormat("{0}, ", cells[i].ToString());
             else
                 sb.AppendFormat("{0}}}", cells[i].ToString());
+        }
+        return sb.ToString();
+    }
+
+    public string ToStringWithOutIndex()
+    {
+        StringBuilder sb = new StringBuilder();
+        string tmp = string.Format("[{0}] = {{ ", index.ToString());
+        for (int i = 0; i < cells.Count; i++)
+        {
+            //if (i != cells.Count - 1)
+            sb.AppendFormat("{0}, ", cells[i].ToString());
         }
         return sb.ToString();
     }
