@@ -1,9 +1,11 @@
 ﻿using System;
+using System.IO;
 using System.Diagnostics;
 
 public class CommandHelper
 {
-    public static void ExcuteCommand(string command, string argument)
+
+    public static string ExcuteCommand(string command, string argument, Boolean isOut = false)
     {
         ProcessStartInfo start = new ProcessStartInfo(command, argument);
         start.CreateNoWindow = true;
@@ -18,8 +20,17 @@ public class CommandHelper
         ps.Start();
         ps.WaitForExit();
         Console.WriteLine(ps.StandardError.ReadToEnd());
-        Console.WriteLine(ps.StandardOutput.ReadToEnd());
+        string output = ps.StandardOutput.ReadToEnd();
+        Console.WriteLine(output);
         ps.Close();
+        if (isOut)
+        {
+            return output;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     public static void ExcuteCommandNoLog(string command, string argument)
