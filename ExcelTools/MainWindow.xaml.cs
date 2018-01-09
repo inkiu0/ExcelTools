@@ -78,7 +78,7 @@ namespace ExcelTools
             }
             using (StreamReader cfgSt = new StreamReader(_ConfigPath))
             {    
-                GlobalCfg._SourcePath = cfgSt.ReadLine();    
+                GlobalCfg._SourcePath = cfgSt.ReadLine();
                 cfgSt.Close();    
             }        
         }
@@ -88,8 +88,7 @@ namespace ExcelTools
             System.Windows.Forms.FolderBrowserDialog folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
             folderBrowser.Description = "选择Table位置：";
             folderBrowser.ShowDialog();
-            string path = folderBrowser.SelectedPath;
-            path.Replace('\\','/');
+            string path = folderBrowser.SelectedPath.Replace(@"\", "/");
             using (StreamWriter cfgSt = new StreamWriter(_ConfigPath))
             {
                 cfgSt.WriteLine(path);
