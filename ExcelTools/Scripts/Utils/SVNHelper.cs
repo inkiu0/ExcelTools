@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 public class SVNHelper
 {
@@ -105,11 +106,28 @@ public class SVNHelper
             if (str != "")
             {
                 string[] tmp = str.Split(' ');
-                string key = tmp[tmp.Length - 1].Replace(@"\","/");
+                string path = tmp[tmp.Length - 1].Replace(@"\","/");
+                string key;
                 string val = IdentiToState(tmp[0]);
-                if (!statusDic.ContainsKey(key))
+                if (Directory.Exists(path))
                 {
-                    statusDic.Add(key,val);
+                    List<string> files = FileUtil.CollectFolder(path, ".xlsx");
+                    for(int i=0; i < files.Count; i++)
+                    {
+                        key = files[i];
+                        if (!statusDic.ContainsKey(key))
+                        {
+                            statusDic.Add(key, val);
+                        }
+                    }
+                }
+                else if (File.Exists(path))
+                {
+                    key = path;
+                    if (!statusDic.ContainsKey(key))
+                    {
+                        statusDic.Add(key, val);
+                    }
                 }
             }
         }
