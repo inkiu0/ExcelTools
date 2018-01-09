@@ -56,6 +56,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -82,8 +83,10 @@
     <Compile Include="Scripts\ExcelParser\Sheet.cs" />
     <Compile Include="Scripts\ExcelParser\Excel.cs" />
     <Compile Include="Scripts\ExcelParser\ZipFile.cs" />
+    <Compile Include="Scripts\GlobalCfg.cs" />
     <Compile Include="Scripts\UI\ExcelFileListItem.cs" />
     <Compile Include="Scripts\Utils\CommandHelper.cs" />
+    <Compile Include="Scripts\Utils\DifferController.cs" />
     <Compile Include="Scripts\Utils\ExcelParserFileHelper.cs" />
     <Compile Include="Scripts\Utils\FileUtil.cs" />
     <Compile Include="Scripts\Utils\SVNHelper.cs" />

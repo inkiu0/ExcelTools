@@ -8,6 +8,7 @@ using System.Windows.Data;
 using NPOI.XSSF.UserModel;
 using NPOI.SS.UserModel;
 using ExcelTools.Scripts.Utils;
+using ExcelTools.Scripts;
 
 namespace ExcelTools
 {
@@ -32,9 +33,10 @@ namespace ExcelTools
 
         CollectionViewSource view = new CollectionViewSource();
         ObservableCollection<ExcelFileListItem> _ExcelFiles = new ObservableCollection<ExcelFileListItem>();
+        const string _ConfigPath = "config.txt";
         List<string> _Folders = new List<string>(){
-            "D:/Ro-Trunk/Cehua/Table/serverexcel",
-            "D:/Ro-Trunk/Cehua/Table/SubConfigs"
+            "/serverexcel",
+            "/SubConfigs"
         };
         List<string> _URLs = new List<string>()
         {
@@ -46,6 +48,10 @@ namespace ExcelTools
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            LoadConfig();
+            _Folders[0] = GlobalCfg._SourcePath + _Folders[0];
+            _Folders[1] = GlobalCfg._SourcePath + _Folders[1];
+
             List<string> files = FileUtil.CollectAllFolders(_Folders, _Ext);
             for (int i = 0; i < files.Count; i++)
             {
@@ -62,6 +68,33 @@ namespace ExcelTools
             view.Source = _ExcelFiles;
             this.fileListView.DataContext = view;
             this.fileListView.MouseDoubleClick += FileListView_MouseDoubleClick;
+        }
+
+        private void LoadConfig()
+        {
+            if (!File.Exists(_ConfigPath))
+            {
+                ChooseSourcePath();
+            }
+            using (StreamReader cfgSt = new StreamReader(_ConfigPath))
+            {    
+                GlobalCfg._SourcePath = cfgSt.ReadLine();    
+                cfgSt.Close();    
+            }        
+        }
+
+        private void ChooseSourcePath()
+        {
+            System.Windows.Forms.FolderBrowserDialog folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
+            folderBrowser.Description = "选择Table位置：";
+            folderBrowser.ShowDialog();
+            string path = folderBrowser.SelectedPath;
+            path.Replace('\\','/');
+            using (StreamWriter cfgSt = new StreamWriter(_ConfigPath))
+            {
+                cfgSt.WriteLine(path);
+                cfgSt.Close();
+            }
         }
 
         private void FileListView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
