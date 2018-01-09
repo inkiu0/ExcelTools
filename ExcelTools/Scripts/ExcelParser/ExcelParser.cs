@@ -5,6 +5,7 @@ using NPOI.SS.UserModel;
 using System.Data.OleDb;
 using System.Data;
 using System;
+using ExcelTools.Scripts;
 
 class ExcelParser
 {
@@ -16,7 +17,6 @@ class ExcelParser
     static string _ClientExt = ".txt";
     static string _ServerExt = ".lua";
     static string _TableImportPath = "Table.txt";
-    static string source_path = "D:/RO/ROTrunk/Cehua/Table";
     static string target_server_table_path = "../Lua/Table";
     static string target_client_table_path = "../../client-refactory/Develop/Assets/Resources/Script/Config";
 
@@ -49,10 +49,11 @@ class ExcelParser
 
     public static void ParseAll()
     {
-        SVNHelper.Update(source_path);
+        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg._SourcePath, ".."));
+        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg._SourcePath, target_client_table_path));
         _NeedImportClient.Clear();
         _NeedImportServer.Clear();
-        List<string> files = FileUtil.CollectFolder(source_path, _ExcelExt, instance.MatchExcelFile);
+        List<string> files = FileUtil.CollectFolder(GlobalCfg._SourcePath, _ExcelExt, instance.MatchExcelFile);
         #region 生成Table.txt的Client和Server版本
         GenTableImportFile();
         #endregion
@@ -84,13 +85,16 @@ class ExcelParser
 
     private void MatchExcelFile(string path, string relativeDir, string fileNameContainExt)
     {
-        string excelmd5 = ExcelParserFileHelper.GetMD5HashFromFile(path);
+        string tmpExlPath = path.Insert(path.LastIndexOf('.'), "_server");
+        string latestExlPath = File.Exists(tmpExlPath) ? tmpExlPath : path;
+        string excelmd5 = ExcelParserFileHelper.GetMD5HashFromFile(latestExlPath);
+        string tarPath = ExcelParserFileHelper.GetTargetLuaPath(path, true);
         string tempPath = ExcelParserFileHelper.GetTempLuaPath(path, true);
 
         #region 生成一份服务器的配置
-        if (!ExcelParserFileHelper.IsSameFileMD5(tempPath, excelmd5))
+        if (!ExcelParserFileHelper.IsSameFileMD5(tarPath, excelmd5))
         {
-            Excel excel = Excel.Parse(path, true);
+            Excel excel = Excel.Parse(latestExlPath, true);
             if (excel != null && excel.success)
                 GenServerVersion(excel, tempPath, excelmd5);
         }
@@ -98,10 +102,11 @@ class ExcelParser
         #region 客户端的Excel生成一份客户端的配置
         if (relativeDir.IndexOf("serverexcel") < 0)
         {
+            tarPath = ExcelParserFileHelper.GetTargetLuaPath(path, false);
             tempPath = ExcelParserFileHelper.GetTempLuaPath(path, false);
-            if(!ExcelParserFileHelper.IsSameFileMD5(tempPath, excelmd5))
+            if (!ExcelParserFileHelper.IsSameFileMD5(tarPath, excelmd5))
             {
-                Excel excel = Excel.Parse(path, false);
+                Excel excel = Excel.Parse(latestExlPath, false);
                 if (excel != null && excel.success)
                     GenClientVersion(excel, tempPath, excelmd5);
             }

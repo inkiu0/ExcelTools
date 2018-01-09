@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ExcelTools.Scripts;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -15,7 +16,6 @@ public class ExcelParserFileHelper
     static string _ServerExt = ".lua";
     static string temp_server_table_path = "temp/server";
     static string temp_client_table_path = "temp/client/Config";
-    static string source_path = "D:/RO/ROTrunk/Cehua/Table";
     static string target_server_table_path = "../Lua/Table";
     static string target_client_table_path = "../../client-refactory/Develop/Assets/Resources/Script/Config";
     static string target_client_other_path = "../../client-refactory/Develop/Assets/Resources/Script/MConfig";
@@ -116,19 +116,19 @@ public class ExcelParserFileHelper
         fname = string.Format("Table_{0}{1}", fname, _TextExt);
         string targetPath = string.Empty;
         if (isServer)
-            targetPath = FileUtil.PathCombine(source_path, target_server_table_path, fname);
+            targetPath = FileUtil.PathCombine(GlobalCfg._SourcePath, target_server_table_path, fname);
         else if (path.IndexOf("SubConfigs") > -1)
         {
-            string dir = path.Substring(path.IndexOf("SubConfigs"));
+            string dir = path.Substring(path.IndexOf("SubConfigs")+ 11, path.LastIndexOf("/") - (path.IndexOf("SubConfigs") + 11) + 1);
             if (!string.IsNullOrWhiteSpace(dir))
             {
                 dir = "Config_" + dir;
                 targetPath = target_client_table_path.Replace("Config", dir);
             }
-            targetPath = FileUtil.PathCombine(source_path, targetPath, fname);
+            targetPath = FileUtil.PathCombine(GlobalCfg._SourcePath, targetPath, fname);
         }
         else
-            targetPath = FileUtil.PathCombine(source_path, target_client_table_path, fname);
+            targetPath = FileUtil.PathCombine(GlobalCfg._SourcePath, target_client_table_path, fname);
         return targetPath;
     }
 
@@ -138,7 +138,7 @@ public class ExcelParserFileHelper
         fname = string.Format("Table_{0}{1}", fname, _TextExt);
         string tempPath = string.Empty;
         if (isServer)
-            tempPath = FileUtil.PathCombine(source_path, temp_server_table_path, fname);
+            tempPath = FileUtil.PathCombine(GlobalCfg._SourcePath, temp_server_table_path, fname);
         else if (path.IndexOf("SubConfigs") > -1)
         {
             int idx = path.IndexOf("SubConfigs");
@@ -147,10 +147,10 @@ public class ExcelParserFileHelper
                 string dir = "Config_" + path.Substring(idx);
                 tempPath = temp_client_table_path.Replace("Config", dir);
             }
-            tempPath = FileUtil.PathCombine(source_path, tempPath, fname);
+            tempPath = FileUtil.PathCombine(GlobalCfg._SourcePath, tempPath, fname);
         }
         else
-            tempPath = FileUtil.PathCombine(source_path, temp_client_table_path, fname);
+            tempPath = FileUtil.PathCombine(GlobalCfg._SourcePath, temp_client_table_path, fname);
         return tempPath;
     }
 }
