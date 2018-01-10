@@ -68,6 +68,7 @@ namespace ExcelTools
             view.Source = _ExcelFiles;
             this.fileListView.DataContext = view;
             this.fileListView.MouseDoubleClick += FileListView_MouseDoubleClick;
+            CheckStateBtn_Click(null,null);
         }
 
         private void LoadConfig()

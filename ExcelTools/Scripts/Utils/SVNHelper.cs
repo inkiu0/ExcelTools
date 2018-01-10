@@ -121,7 +121,7 @@ public class SVNHelper
                         }
                     }
                 }
-                else if (File.Exists(path))
+                else
                 {
                     key = path;
                     if (!statusDic.ContainsKey(key))
