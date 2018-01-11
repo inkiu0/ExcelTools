@@ -154,7 +154,7 @@ public class Excel
     private void ParseExcelContents()
     {
         if (!success) return;
-        for (int i = 4; i < mainSheet.LastRowNum; i++)
+        for (int i = 4; i <= mainSheet.LastRowNum; i++)
         {
             IRow row = mainSheet.GetRow(i);
             if (row != null)
