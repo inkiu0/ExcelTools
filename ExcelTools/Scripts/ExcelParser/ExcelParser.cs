@@ -69,6 +69,15 @@ class ExcelParser
         //}
     }
 
+    //版本库中最新的表格若未生成配置则生成临时配置
+    public static void ParseTemp(string exlPath)
+    {
+        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg._SourcePath, ".."));
+        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg._SourcePath, target_client_table_path));
+        instance.MatchExcelFile(exlPath, null, null);
+        GenTableImportFile();
+    }
+
     private static void GenServerVersion(Excel excel, string targetPath, string md5)
     {
         string contents = "--md5:" + md5 + "\n";
@@ -100,7 +109,7 @@ class ExcelParser
         }
         #endregion
         #region 客户端的Excel生成一份客户端的配置
-        if (relativeDir.IndexOf("serverexcel") < 0)
+        if (path.IndexOf("serverexcel") < 0)
         {
             tarPath = ExcelParserFileHelper.GetTargetLuaPath(path, false);
             tempPath = ExcelParserFileHelper.GetTempLuaPath(path, false);
