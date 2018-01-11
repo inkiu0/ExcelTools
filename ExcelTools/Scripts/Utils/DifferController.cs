@@ -1,11 +1,13 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NPOI.XSSF.UserModel;
 using NPOI.SS.UserModel;
+using System.Collections.ObjectModel;
+using ExcelTools.Scripts.UI;
+using System.ComponentModel;
+using System.Text;
+using System.Windows;
 
 namespace ExcelTools.Scripts.Utils
 {
@@ -27,20 +29,82 @@ namespace ExcelTools.Scripts.Utils
 
         //存储TempPath文件中被删除的行号
         private List<int> _deletedList = new List<int>();
-        public List<int> DeletedList
-        {
-            get { return _deletedList; }
-        }
         //存储localExcelPath文件中被添加的行号
         private List<int> _addedList = new List<int>();
-        public List<int> AddedList
-        {
-            get { return _addedList; }
-        }
         //存储TempPath文件中需要插入的行号
         private List<int> _addedToList = new List<int>();
         //存储deletedList和addedList中的公共值
         private List<int> _modifiedList = new List<int>();
+
+
+        private List<int> _cancelList = new List<int>();
+
+        #region 以下为UI绑定数据及设置
+        public string SelectedText;
+        private ObservableCollection<DiffItem> _diffItems;
+        public ObservableCollection<DiffItem> DiffItems
+        {
+            get
+            {
+                if (_diffItems == null)
+                {
+                    _diffItems = new ObservableCollection<DiffItem>();
+                    _diffItems.CollectionChanged += (sender, e) =>
+                    {
+                        if (e.OldItems != null)
+                        {
+                            foreach (DiffItem diffItems in e.OldItems)
+                            {
+                                diffItems.PropertyChanged -= ItemPropertyChanged;
+                            }
+                        }
+
+                        if (e.NewItems != null)
+                        {
+                            foreach (DiffItem diffItems in e.NewItems)
+                            {
+                                diffItems.PropertyChanged += ItemPropertyChanged;
+                            }
+                        }
+                    };
+                }
+                return _diffItems;
+            }
+        }
+        #endregion
+
+        private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "IsChecked")
+            {
+                if (sender is DiffItem diffItem)
+                {
+                    //刷新UI
+                    GenSelectedText();
+                    MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
+                    mainWindow.diffChooseBox.Text = SelectedText;
+                    //修改逻辑数据
+                    if (diffItem.IsChecked == false)
+                        _cancelList.Add(diffItem.Row);
+                    else
+                        _cancelList.Remove(diffItem.Row);
+                }
+            }
+        }
+
+        private void GenSelectedText()
+        {
+            IEnumerable<DiffItem> diffItems = DiffItems.Where(b => b.IsChecked == true);
+
+            StringBuilder builder = new StringBuilder();
+
+            foreach (DiffItem item in diffItems)
+            {
+                builder.Append(item.Row + ";");
+            }
+
+            SelectedText = builder == null ? string.Empty : builder.ToString();
+        }
 
 
         public DifferController(string localExcelPath, string tempPath)
@@ -99,14 +163,68 @@ namespace ExcelTools.Scripts.Utils
                 {
                     _modifiedList.Add(index);
                 }
+                RefreshUIData();
                 return true;
             }
         }
 
-        //取消个别改动时用这个，全部取消直接Revert
-        public void CancelChanges(int[] rowsExclusion)
+        //刷新UI绑定的数据
+        private void RefreshUIData()
         {
-            for (int i = 0; i < rowsExclusion.Length; i++)
+            DiffItems.Clear();
+            for (int i = 0; i < _modifiedList.Count; i++)
+            {
+                DiffItems.Add(new DiffItem()
+                {
+                    Row = _addedList[i],
+                    State = "modified",
+                    IsChecked = true,
+                    Context = ""
+                });
+            }
+            for (int i = 0; i < _addedList.Count; i++)
+            {
+                if (!_modifiedList.Contains(_addedList[i]))
+                {
+                    DiffItems.Add(new DiffItem()
+                    {
+                        Row = _addedList[i],
+                        State = "added",
+                        IsChecked = true,
+                        Context = ""
+                    });
+                }
+            }
+            for (int i = 0; i < _deletedList.Count; i++)
+            {
+                if (!_modifiedList.Contains(_deletedList[i]))
+                {
+                    DiffItems.Add(new DiffItem()
+                    {
+                        Row = _deletedList[i],
+                        State = "deleted",
+                        IsChecked = true,
+                        Context = ""
+                    });
+                }
+            }
+            GenSelectedText();
+        }
+
+        public void ConfirmChangesAndCommit()
+        {
+            CancelChanges(_cancelList);
+            ModifyTempFile();
+            //TODO:生成并提交
+            //
+            //
+        }
+
+
+        //取消个别改动时用这个，全部取消直接Revert
+        private void CancelChanges(List<int> rowsExclusion)
+        {
+            for (int i = 0; i < rowsExclusion.Count; i++)
             {
                 if (_modifiedList.IndexOf(rowsExclusion[i]) != -1)
                 {
@@ -140,7 +258,7 @@ namespace ExcelTools.Scripts.Utils
             }
         }
 
-        public void ModifyTempFile()
+        private void ModifyTempFile()
         {
             XSSFWorkbook tmpWk = null;
             XSSFWorkbook locWk = null;

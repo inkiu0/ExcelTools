@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ExcelTools"
+        xmlns:custom="clr-namespace:ExcelTools.Scripts.UI"
         mc:Ignorable="d"
         Title="配置表工具" Height="600" Width="800" Loaded="Window_Loaded">
     <Grid>
@@ -18,7 +18,21 @@
             </ListView.View>
         </ListView>
         <Button Content="检查状态" Click ="CheckStateBtn_Click" Name ="checkStateBtn" HorizontalAlignment="Right" Margin="0,0,20,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
-        <Button Content="功能" Click ="MultiFuncBtn_Click" Name="multiFuncBtn" HorizontalAlignment="Right" Margin="0,0,158,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
+        <Button Content="功能" Click ="MultiFuncBtn_Click" Name="multiFuncBtn" HorizontalAlignment="Right" Margin="0,0,137,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
+        <Button Content="更改表格路径" Click ="ChangeSourcePath_Click" Name="changePathBtn" HorizontalAlignment="Right" Margin="0,0,260,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
+        <ComboBox HorizontalAlignment="Left" Name ="diffChooseBox" Margin="18,519,0,0" VerticalAlignment="Top" Width="223" IsEditable="True" ItemsSource="{Binding}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type custom:DiffItem}">
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox IsChecked="{Binding IsChecked}" />
+                        <TextBlock Text="{Binding State}" />
+                        <TextBlock Text=" at 行：" />
+                        <TextBlock Text="{Binding Row}" />
+                        <TextBlock Text="{Binding Context}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
 
     </Grid>
 </Window>

@@ -9,6 +9,7 @@ using NPOI.XSSF.UserModel;
 using NPOI.SS.UserModel;
 using ExcelTools.Scripts.Utils;
 using ExcelTools.Scripts;
+using ExcelTools.Scripts.UI;
 
 namespace ExcelTools
 {
@@ -33,6 +34,7 @@ namespace ExcelTools
 
         CollectionViewSource view = new CollectionViewSource();
         ObservableCollection<ExcelFileListItem> _ExcelFiles = new ObservableCollection<ExcelFileListItem>();
+        Dictionary<string, DifferController> _DiffDic = new Dictionary<string, DifferController>();
         const string _ConfigPath = "config.txt";
         List<string> _Folders = new List<string>(){
             "/serverexcel",
@@ -43,15 +45,25 @@ namespace ExcelTools
             "svn://svn.sg.xindong.com/RO/client-trunk/Cehua/Table/serverexcel",
             "svn://svn.sg.xindong.com/RO/client-trunk/Cehua/Table/SubConfigs"
         };
+        const string _FolderServerExvel = "/serverexcel";
+        const string _FolderSubConfigs = "/SubConfigs";
         const string _Ext = ".xlsx";
         const string _TempRename = "_server";
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             LoadConfig();
-            _Folders[0] = GlobalCfg._SourcePath + _Folders[0];
-            _Folders[1] = GlobalCfg._SourcePath + _Folders[1];
+            Refresh();
+            this.fileListView.DataContext = view;
+            this.fileListView.MouseDoubleClick += FileListView_MouseDoubleClick;
+            GetRevision();
+        }
 
+        private void Refresh()
+        {
+            _Folders[0] = GlobalCfg._SourcePath + _FolderServerExvel;
+            _Folders[1] = GlobalCfg._SourcePath + _FolderSubConfigs;
+            _ExcelFiles.Clear();
             List<string> files = FileUtil.CollectAllFolders(_Folders, _Ext);
             for (int i = 0; i < files.Count; i++)
             {
@@ -63,12 +75,8 @@ namespace ExcelTools
                     FilePath = files[i]
                 });
             }
-
-            GetRevision();
             view.Source = _ExcelFiles;
-            this.fileListView.DataContext = view;
-            this.fileListView.MouseDoubleClick += FileListView_MouseDoubleClick;
-            CheckStateBtn_Click(null,null);
+            CheckStateBtn_Click(null, null);
         }
 
         private void LoadConfig()
@@ -90,11 +98,21 @@ namespace ExcelTools
             folderBrowser.Description = "选择Table位置：";
             folderBrowser.ShowDialog();
             string path = folderBrowser.SelectedPath.Replace(@"\", "/");
-            using (StreamWriter cfgSt = new StreamWriter(_ConfigPath))
+            if (path.Contains("Table"))
             {
-                cfgSt.WriteLine(path);
-                cfgSt.Close();
+                using (StreamWriter cfgSt = new StreamWriter(_ConfigPath))
+                {
+                    cfgSt.WriteLine(path);
+                    cfgSt.Close();
+                }
             }
+        }
+
+        private void ChangeSourcePath_Click(object sender, RoutedEventArgs e)
+        {
+            ChooseSourcePath();
+            LoadConfig();
+            Refresh();
         }
 
         private void FileListView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -103,40 +121,34 @@ namespace ExcelTools
             ExcelFileListItem item = listView.SelectedItem as ExcelFileListItem;
             //Excel excel = Excel.Parse(item.FilePath, false);
             //string tmp = excel.ToString();
-            ExcelParser.ParseAll();
+            //ExcelParser.ParseAll();
             _listItemChoosed = item;
             if (item == null)
             {
                 return;
             }
             JudgeMultiFuncBtnState();
-            if (item.Status != SVNHelper.STATE_MODIFIED)
+            if (item.Status == SVNHelper.STATE_MODIFIED)
             {
-                return;
+                ExcelParser.ParseTemp(item.FilePath);
+                DifferController differController = _DiffDic[item.FilePath];
+                if (differController.DiffItems.Count > 0)
+                {
+                    this.diffChooseBox.Text = differController.SelectedText;
+                    this.diffChooseBox.ItemsSource = differController.DiffItems;
+                }
             }
-            Excel localExcel = Excel.Parse(item.FilePath, false);
-            string tmpServerPath = item.FilePath.Remove(item.FilePath.LastIndexOf('/') + 1) + item.Name + _TempRename + _Ext;
-            DifferController differController = new DifferController(item.FilePath, tmpServerPath);
-            differController.Differ();
+            else
+            {
+                this.diffChooseBox.Text = item.Status;
+                this.diffChooseBox.ItemsSource = null;
+            }
         }
 
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
         {
             Dictionary<string, string> statusDic = SVNHelper.Status(_Folders[0], _Folders[1]);
-            //插入被删除的文件
-            foreach (KeyValuePair<string, string> kv in statusDic)
-            {
-                if (kv.Value == SVNHelper.STATE_DELETED)
-                {
-                    _ExcelFiles.Add(new ExcelFileListItem()
-                    {
-                        Name = Path.GetFileNameWithoutExtension(kv.Key),
-                        Status = kv.Value,
-                        ClientServer = "C/S",
-                        FilePath = kv.Key
-                    });
-                }
-            }
+            _DiffDic.Clear();
             for(int i = 0; i < _ExcelFiles.Count; i++)
             {
                 if (statusDic.ContainsKey(_ExcelFiles[i].FilePath))
@@ -153,8 +165,28 @@ namespace ExcelTools
                 {
                     _ExcelFiles[i].Status = "C/S";
                 }
-            }    
-            //JudgeMultiFuncBtnState();
+            }
+            foreach (KeyValuePair<string, string> kv in statusDic)
+            {
+                //插入deleted文件
+                if (kv.Value == SVNHelper.STATE_DELETED)
+                {
+                    _ExcelFiles.Add(new ExcelFileListItem()
+                    {
+                        Name = Path.GetFileNameWithoutExtension(kv.Key),
+                        Status = kv.Value,
+                        ClientServer = "C/S",
+                        FilePath = kv.Key
+                    });
+                }
+                //初始化modified文件的比较器
+                if (kv.Value == SVNHelper.STATE_MODIFIED)
+                {
+                    string tmpExlPath = kv.Key.Remove(kv.Key.LastIndexOf('/') + 1) + Path.GetFileNameWithoutExtension(kv.Key) + _TempRename + _Ext;
+                    _DiffDic[kv.Key] = new DifferController(kv.Key, tmpExlPath);
+                    _DiffDic[kv.Key].Differ();
+                }
+            }
         }
 
         private void MultiFuncBtn_Click(object sender, RoutedEventArgs e)
