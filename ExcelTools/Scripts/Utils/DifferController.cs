@@ -40,72 +40,19 @@ namespace ExcelTools.Scripts.Utils
         private List<int> _cancelList = new List<int>();
 
         #region 以下为UI绑定数据及设置
-        public string SelectedText;
         private ObservableCollection<DiffItem> _diffItems;
         public ObservableCollection<DiffItem> DiffItems
         {
             get
             {
-                if (_diffItems == null)
+                if(_diffItems == null)
                 {
                     _diffItems = new ObservableCollection<DiffItem>();
-                    _diffItems.CollectionChanged += (sender, e) =>
-                    {
-                        if (e.OldItems != null)
-                        {
-                            foreach (DiffItem diffItems in e.OldItems)
-                            {
-                                diffItems.PropertyChanged -= ItemPropertyChanged;
-                            }
-                        }
-
-                        if (e.NewItems != null)
-                        {
-                            foreach (DiffItem diffItems in e.NewItems)
-                            {
-                                diffItems.PropertyChanged += ItemPropertyChanged;
-                            }
-                        }
-                    };
                 }
                 return _diffItems;
             }
         }
         #endregion
-
-        private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == "IsChecked")
-            {
-                if (sender is DiffItem diffItem)
-                {
-                    //刷新UI
-                    GenSelectedText();
-                    MainWindow mainWindow = Application.Current.MainWindow as MainWindow;
-                    mainWindow.diffChooseBox.Text = SelectedText;
-                    //修改逻辑数据
-                    if (diffItem.IsChecked == false)
-                        _cancelList.Add(diffItem.Row);
-                    else
-                        _cancelList.Remove(diffItem.Row);
-                }
-            }
-        }
-
-        private void GenSelectedText()
-        {
-            IEnumerable<DiffItem> diffItems = DiffItems.Where(b => b.IsChecked == true);
-
-            StringBuilder builder = new StringBuilder();
-
-            foreach (DiffItem item in diffItems)
-            {
-                builder.Append(item.Row + ";");
-            }
-
-            SelectedText = builder == null ? string.Empty : builder.ToString();
-        }
-
 
         public DifferController(string localExcelPath, string tempPath)
         {
@@ -176,10 +123,9 @@ namespace ExcelTools.Scripts.Utils
             {
                 DiffItems.Add(new DiffItem()
                 {
-                    Row = _addedList[i],
+                    Row = _modifiedList[i],
                     State = "modified",
-                    IsChecked = true,
-                    Context = ""
+                    Context = Excel.Parse(_localPath, false).rows[_modifiedList[i] - 5].ToStringWithOutIndex()
                 });
             }
             for (int i = 0; i < _addedList.Count; i++)
@@ -190,8 +136,7 @@ namespace ExcelTools.Scripts.Utils
                     {
                         Row = _addedList[i],
                         State = "added",
-                        IsChecked = true,
-                        Context = ""
+                        Context = Excel.Parse(_localPath, false).rows[_addedList[i] - 5].ToStringWithOutIndex()
                     });
                 }
             }
@@ -203,12 +148,10 @@ namespace ExcelTools.Scripts.Utils
                     {
                         Row = _deletedList[i],
                         State = "deleted",
-                        IsChecked = true,
-                        Context = ""
+                        Context = Excel.Parse(_tempPath, false).rows[_deletedList[i] - 5].ToStringWithOutIndex()
                     });
                 }
             }
-            GenSelectedText();
         }
 
         public void ConfirmChangesAndCommit()

@@ -134,14 +134,13 @@ namespace ExcelTools
                 DifferController differController = _DiffDic[item.FilePath];
                 if (differController.DiffItems.Count > 0)
                 {
-                    this.diffChooseBox.Text = differController.SelectedText;
-                    this.diffChooseBox.ItemsSource = differController.DiffItems;
+                    DifferWindow differWindow = new DifferWindow(item.Name, differController.DiffItems);
+                    differWindow.Show();
                 }
             }
             else
             {
-                this.diffChooseBox.Text = item.Status;
-                this.diffChooseBox.ItemsSource = null;
+                //TODO:提示 并没有内容修改，不需要重新生成配置，建议revert
             }
         }
 

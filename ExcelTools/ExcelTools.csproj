@@ -75,6 +75,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DifferWindow.xaml.cs">
+      <DependentUpon>DifferWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Scripts\Data\RefactoryTable.cs" />
     <Compile Include="Scripts\ExcelParser\ExcelCell.cs" />
     <Compile Include="Scripts\ExcelParser\ExcelParser.cs" />
@@ -91,6 +94,10 @@
     <Compile Include="Scripts\Utils\ExcelParserFileHelper.cs" />
     <Compile Include="Scripts\Utils\FileUtil.cs" />
     <Compile Include="Scripts\Utils\SVNHelper.cs" />
+    <Page Include="DifferWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

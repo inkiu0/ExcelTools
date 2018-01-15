@@ -17,22 +17,5 @@ namespace ExcelTools.Scripts.UI
 
         public string Context { get; set; }
 
-        private bool _isChecked;
-        public bool IsChecked
-        {
-            get
-            {
-                return _isChecked;
-            }
-            set
-            {
-                if (_isChecked != value)
-                {
-                    _isChecked = value;
-
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsChecked"));
-                }
-            }
-        }
     }
 }
