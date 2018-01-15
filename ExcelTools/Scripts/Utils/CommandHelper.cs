@@ -19,8 +19,7 @@ public class CommandHelper
         ps.StartInfo = start;
         ps.Start();
         ps.WaitForExit();
-        Console.WriteLine(ps.StandardError.ReadToEnd());
-        string output = ps.StandardOutput.ReadToEnd();
+        string output = ps.StandardOutput.ReadToEnd() + ps.StandardError.ReadToEnd();
         Console.WriteLine(output);
         ps.Close();
         if (isOut)

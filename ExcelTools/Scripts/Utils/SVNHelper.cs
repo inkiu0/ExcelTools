@@ -31,14 +31,22 @@ public class SVNHelper
     /// <summary>
     /// 锁定文件，一次只允许锁一个文件
     /// </summary>
-    public static string Lock(string path,string message = null)
+    public static bool Lock(string path,string message = null)
     {
         string arguments = "lock -m " + "\"" + message + "\" " + path;
         string info = CommandHelper.ExcuteCommand("svn", arguments, true);
-        return info;
+        //TODO:这里判断不知道是否严谨，待验证
+        if (info.Contains("warning"))
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 
-    public static void UnLock(string path)
+    public static void ReleaseLock(string path)
     {
         string arguments = "unlock " + path;
         CommandHelper.ExcuteCommand("svn", arguments);
@@ -106,32 +114,84 @@ public class SVNHelper
             if (str != "")
             {
                 string[] tmp = str.Split(' ');
-                string path = tmp[tmp.Length - 1].Replace(@"\","/");
-                string key;
-                string val = IdentiToState(tmp[0]);
-                if (Directory.Exists(path))
+                string[] state = new string[3] { "C/S", "", "" };
+                state[0] = tmp[0];
+                state[2] = tmp[tmp.Length -1];
+                for (int i = 1; i< tmp.Length -1;i++)
                 {
-                    List<string> files = FileUtil.CollectFolder(path, ".xlsx");
-                    for(int i=0; i < files.Count; i++)
+                    if(tmp[i] != "")
                     {
-                        key = files[i];
+                        state[1] = tmp[i];
+                        break;
+                    }
+                }
+                string path = state[2].Replace(@"\","/");
+                string key;
+                string val = IdentiToState(state[0]);
+                //if (state[1] != "")
+                //{
+                //    val = IdentiToState(state[1]);
+                //}
+                if (state[0] != "")
+                {
+                    if (Directory.Exists(path))
+                    {
+                        List<string> files = FileUtil.CollectFolder(path, ".xlsx");
+                        for (int i = 0; i < files.Count; i++)
+                        {
+                            key = files[i];
+                            if (!statusDic.ContainsKey(key))
+                            {
+                                statusDic.Add(key, val);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        key = path;
                         if (!statusDic.ContainsKey(key))
                         {
                             statusDic.Add(key, val);
                         }
                     }
                 }
-                else
-                {
-                    key = path;
-                    if (!statusDic.ContainsKey(key))
-                    {
-                        statusDic.Add(key, val);
-                    }
-                }
             }
         }
         return statusDic;
+    }
+
+    public static string LockInfo(string path)
+    {
+        string lockInfo = null;
+        string arguments = "info " + PathToUrl(path);
+        string info = CommandHelper.ExcuteCommand("svn", arguments, true);
+        string[] infoArray = info.Split('\n', '\r');
+        foreach (string str in infoArray)
+        {
+            if (str.StartsWith("Lock"))
+            {
+                lockInfo += str + "\n";
+            }
+        }
+        return lockInfo;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="path">只能填文件的本地路径</param>
+    public static bool IsLockedByMe(string path)
+    {
+        string arguments = "info " + path;
+        string info = CommandHelper.ExcuteCommand("svn", arguments, true);
+        if(info.Contains("Lock Owner"))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private static string IdentiToState(string identifier)
@@ -151,5 +211,11 @@ public class SVNHelper
             default:
                 return null;
         }
+    }
+
+    public static string PathToUrl(string path)
+    {
+        string url = "svn://svn.sg.xindong.com/RO/client-trunk/" + path.Substring(path.IndexOf("Cehua"));
+        return url;
     }
 } 

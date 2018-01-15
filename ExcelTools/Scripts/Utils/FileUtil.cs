@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Collections.Generic;
 using System;
+using System.Windows.Forms;
+using System.Reflection;
 
 class FileUtil
 {
@@ -155,17 +157,22 @@ class FileUtil
         }
     }
 
-    //抢占式
     public static void OpenFile(string path)
     {
-        string output = SVNHelper.Lock(path, "请求锁定" + path);
-        if (output.Contains("warning"))
+        if (SVNHelper.IsLockedByMe(path))
         {
-            return;
+            OpenExcelApplication(path);
+        }
+        else if (SVNHelper.Lock(path, "请求锁定" + path))
+        {
+            OpenExcelApplication(path);
         }
         else
         {
-            System.Diagnostics.Process.Start(path);
+            string message = SVNHelper.LockInfo(path);
+            string caption = "此文件锁定中";
+            MessageBoxButtons buttons = MessageBoxButtons.OK;
+            MessageBox.Show(message, caption, buttons);
         }
     }
 
@@ -187,4 +194,29 @@ class FileUtil
         path = path.Replace(Path.DirectorySeparatorChar, '/');
         return path;
     }
+
+    private static bool OpenExcelApplication(string path)
+    {
+        if (!File.Exists(path))
+        {
+            throw new Exception(path + "文件不存在！");
+        }
+        else
+        {
+            try
+            {
+                Microsoft.Office.Interop.Excel.Application excelApplication = new Microsoft.Office.Interop.Excel.Application();
+                Microsoft.Office.Interop.Excel.Workbooks excelWorkbooks = excelApplication.Workbooks;
+                Microsoft.Office.Interop.Excel.Workbook excelWorkbook = excelWorkbooks.Open(path, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value) as Microsoft.Office.Interop.Excel.Workbook;
+                excelApplication.Visible = true;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("（1）程序中没有安装Excel程序。（2）或没有安装Excel所需要支持的.NetFramework\n详细信息：{0}", ex.Message));
+            }
+        }
+    }
+
 }
