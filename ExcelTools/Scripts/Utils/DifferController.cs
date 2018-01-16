@@ -78,31 +78,17 @@ namespace ExcelTools.Scripts.Utils
                 _modifiedList.Clear();
                 for (int i = 0; i < tempExcel.rows.Count; i++)
                 {
-                    for (int j = 0; j < localExcel.rows.Count; j++)
+                    if (!localExcelTmp.Contains(tempExcel.rows[i].ToString()))
                     {
-                        if (tempExcel.rows[i].ToStringWithOutIndex() == localExcel.rows[j].ToStringWithOutIndex())
-                        {
-                            break;
-                        }
-                        if (j == localExcel.rows.Count - 1)
-                        {
-                            _deletedList.Add(i + 5);
-                        }
+                        _deletedList.Add(i + 5);
                     }
                 }
                 for (int i = 0; i < localExcel.rows.Count; i++)
                 {
-                    for (int j = 0; j < tempExcel.rows.Count; j++)
+                    if (!tempTmp.Contains(localExcel.rows[i].ToString()))
                     {
-                        if (tempExcel.rows[j].ToStringWithOutIndex() == localExcel.rows[i].ToStringWithOutIndex())
-                        {
-                            break;
-                        }
-                        if (j == tempExcel.rows.Count - 1)
-                        {
-                            _addedList.Add(i + 5);
-                            _addedToList.Add(i + 5);
-                        }
+                        _addedList.Add(i + 5);
+                        _addedToList.Add(i + 5);
                     }
                 }
                 IEnumerable<int> en = _deletedList.Intersect(_addedList);
