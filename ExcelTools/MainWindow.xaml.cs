@@ -5,11 +5,9 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using NPOI.XSSF.UserModel;
-using NPOI.SS.UserModel;
 using ExcelTools.Scripts.Utils;
 using ExcelTools.Scripts;
-using ExcelTools.Scripts.UI;
+using System.ComponentModel;
 
 namespace ExcelTools
 {
@@ -40,11 +38,7 @@ namespace ExcelTools
             "/serverexcel",
             "/SubConfigs"
         };
-        List<string> _URLs = new List<string>()
-        {
-            "svn://svn.sg.xindong.com/RO/client-trunk/Cehua/Table/serverexcel",
-            "svn://svn.sg.xindong.com/RO/client-trunk/Cehua/Table/SubConfigs"
-        };
+        const string _URL = "svn://svn.sg.xindong.com/RO/client-trunk";
         const string _FolderServerExvel = "/serverexcel";
         const string _FolderSubConfigs = "/SubConfigs";
         const string _Ext = ".xlsx";
@@ -54,8 +48,10 @@ namespace ExcelTools
         {
             LoadConfig();
             Refresh();
-            this.fileListView.DataContext = view;
-            this.fileListView.MouseDoubleClick += FileListView_MouseDoubleClick;
+            fileListView.DataContext = view;
+            fileListView.MouseDoubleClick += FileListView_MouseDoubleClick;
+            fileListView.Items.SortDescriptions.Add(new SortDescription("Status", ListSortDirection.Descending));
+            fileListView.Items.IsLiveSorting = true;
             GetRevision();
         }
 
@@ -70,7 +66,7 @@ namespace ExcelTools
                 _ExcelFiles.Add(new ExcelFileListItem()
                 {
                     Name = Path.GetFileNameWithoutExtension(files[i]),
-                    Status = "C/S",
+                    Status = "/",
                     ClientServer = "C/S",
                     FilePath = files[i]
                 });
@@ -94,8 +90,11 @@ namespace ExcelTools
 
         private void ChooseSourcePath()
         {
-            System.Windows.Forms.FolderBrowserDialog folderBrowser = new System.Windows.Forms.FolderBrowserDialog();
-            folderBrowser.Description = "选择Table位置：";
+            System.Windows.Forms.FolderBrowserDialog folderBrowser = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "选择Table位置：",
+                ShowNewFolderButton = false,
+            };
             folderBrowser.ShowDialog();
             string path = folderBrowser.SelectedPath.Replace(@"\", "/");
             if (path.Contains("Table"))
@@ -105,14 +104,21 @@ namespace ExcelTools
                     cfgSt.WriteLine(path);
                     cfgSt.Close();
                 }
+                LoadConfig();
+                Refresh();
+            }
+            else
+            {
+                string message = path + "不是Table的路径\n请选择包含Table的路径！";
+                string caption = "Error";
+                System.Windows.Forms.MessageBoxButtons buttons = System.Windows.Forms.MessageBoxButtons.OK;
+                System.Windows.Forms.MessageBox.Show(message, caption, buttons);
             }
         }
 
         private void ChangeSourcePath_Click(object sender, RoutedEventArgs e)
         {
             ChooseSourcePath();
-            LoadConfig();
-            Refresh();
         }
 
         private void FileListView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -130,11 +136,13 @@ namespace ExcelTools
             JudgeMultiFuncBtnState();
             if (item.Status == SVNHelper.STATE_MODIFIED)
             {
-                ExcelParser.ParseTemp(item.FilePath);
-                DifferController differController = _DiffDic[item.FilePath];
-                if (differController.DiffItems.Count > 0)
+                //ExcelParser.ParseTemp(item.FilePath);
+                string tmpExlPath = item.FilePath.Remove(item.FilePath.LastIndexOf('/') + 1) + Path.GetFileNameWithoutExtension(item.FilePath) + _TempRename + _Ext;
+                _DiffDic[item.FilePath] = new DifferController(item.FilePath, tmpExlPath);
+                _DiffDic[item.FilePath].Differ();
+                if (_DiffDic[item.FilePath].DiffItems.Count > 0)
                 {
-                    DifferWindow differWindow = new DifferWindow(item.Name, differController.DiffItems);
+                    DifferWindow differWindow = new DifferWindow(item.Name, _DiffDic[item.FilePath].DiffItems);
                     differWindow.Show();
                 }
             }
@@ -146,8 +154,8 @@ namespace ExcelTools
 
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
         {
+            ExcelParser.ParseAll();
             Dictionary<string, string> statusDic = SVNHelper.Status(_Folders[0], _Folders[1]);
-            _DiffDic.Clear();
             for(int i = 0; i < _ExcelFiles.Count; i++)
             {
                 if (statusDic.ContainsKey(_ExcelFiles[i].FilePath))
@@ -155,14 +163,14 @@ namespace ExcelTools
                     _ExcelFiles[i].Status = statusDic[_ExcelFiles[i].FilePath];
                     if(_ExcelFiles[i].Status == SVNHelper.STATE_MODIFIED)
                     {
-                        string fileUrl = (_ExcelFiles[i].FilePath.Contains("serverexcel") ? _URLs[0] : _URLs[1]) + "/" + _ExcelFiles[i].Name + _Ext;
-                        string aimPath = (_ExcelFiles[i].FilePath.Contains("serverexcel") ? _Folders[0] : _Folders[1]) + "/" + _ExcelFiles[i].Name + _TempRename + _Ext;
+                        string fileUrl = _URL + "/" + _ExcelFiles[i].FilePath.Substring(_ExcelFiles[i].FilePath.IndexOf("Cehua"));
+                        string aimPath = _ExcelFiles[i].FilePath.Insert(_ExcelFiles[i].FilePath.LastIndexOf("."), _TempRename);
                         SVNHelper.CatFile(fileUrl, aimPath);
                     }
                 }
                 else
                 {
-                    _ExcelFiles[i].Status = "C/S";
+                    _ExcelFiles[i].Status = "/";
                 }
             }
             foreach (KeyValuePair<string, string> kv in statusDic)
@@ -177,13 +185,6 @@ namespace ExcelTools
                         ClientServer = "C/S",
                         FilePath = kv.Key
                     });
-                }
-                //初始化modified文件的比较器
-                if (kv.Value == SVNHelper.STATE_MODIFIED)
-                {
-                    string tmpExlPath = kv.Key.Remove(kv.Key.LastIndexOf('/') + 1) + Path.GetFileNameWithoutExtension(kv.Key) + _TempRename + _Ext;
-                    _DiffDic[kv.Key] = new DifferController(kv.Key, tmpExlPath);
-                    _DiffDic[kv.Key].Differ();
                 }
             }
         }
@@ -212,7 +213,7 @@ namespace ExcelTools
         private void GetRevision()
         {
             _localRev = SVNHelper.GetLastestReversion(_Folders[0]);
-            _serverRev = SVNHelper.GetLastestReversion(_URLs[0]);
+            _serverRev = SVNHelper.GetLastestReversion(_URL);
             JudgeMultiFuncBtnState();
         }
 
@@ -229,7 +230,7 @@ namespace ExcelTools
             {
                 multiFuncBtn.Content = STATE_REVERT;
             }
-            else if (_listItemChoosed != null && _listItemChoosed.Status == "C/S")
+            else if (_listItemChoosed != null && _listItemChoosed.Status == "/")
             {
                 multiFuncBtn.Content = STATE_EDIT;
             }

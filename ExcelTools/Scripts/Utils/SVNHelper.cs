@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 
 public class SVNHelper
@@ -114,7 +113,7 @@ public class SVNHelper
             if (str != "")
             {
                 string[] tmp = str.Split(' ');
-                string[] state = new string[3] { "C/S", "", "" };
+                string[] state = new string[3] { "/", "", "" };
                 state[0] = tmp[0];
                 state[2] = tmp[tmp.Length -1];
                 for (int i = 1; i< tmp.Length -1;i++)
