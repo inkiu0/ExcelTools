@@ -10,29 +10,62 @@ namespace Lua
 {
     public class lparser
     {
+        static string configformat = "[{0}] = {{";
+        static string kvformat = "{0} = {1}";
         public struct table
         {
             public string md5;
-            public string tablename;
+            public string name;
             public List<config> configs;
+
+            public string GenString(Func<string> callback)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("--" + md5 + "\n");
+                sb.Append(name + " = {\n");
+                for (int i = 0; i < configs.Count; i++)
+                {
+                    sb.Append("\t");
+                    sb.Append(configs[i].GenString());
+                    if (i < configs.Count - 1)
+                        sb.Append(",");
+                    sb.Append("\n");
+                }
+                sb.Append("}\n");
+                sb.Append(callback());
+                sb.Append("return" + name);
+                return sb.ToString();
+            }
         }
 
         public struct config
         {
             public string key;
             public List<property> properties;
+
+            public string GenString()
+            {
+                StringBuilder sb = new StringBuilder(string.Format(configformat, key));
+                for(int i = 0; i < properties.Count; i++)
+                {
+                    sb.Append(properties[i].GenString());
+                    if (i < properties.Count - 1)
+                        sb.Append(", ");
+                }
+                sb.Append("}");
+                return sb.ToString();
+            }
         }
 
         public struct property
         {
-            public string propertyname;
+            public string name;
             public string value;
-        }
 
-        public static void LuaY_Parser(char[] buff, int offset)
-        {
-            StreamReader sr = new StreamReader(@"");
-            char[] cs = sr.ReadToEnd().ToCharArray();
+            public string GenString()
+            {
+                return string.Format(kvformat, name, value);
+            }
         }
 
         static string read_name(StreamReader sr)
@@ -49,7 +82,7 @@ namespace Lua
         static property read_property(StreamReader sr)
         {
             property p = new property();
-            p.propertyname = llex_lite.buff2str();/* read key */
+            p.name = llex_lite.buff2str();/* read key */
             llex_lite.llex(sr); p.value = llex_lite.buff2str();/* read val */
             return p;
         }
@@ -78,7 +111,7 @@ namespace Lua
             table t = new table
             {
                 md5 = md5Str,
-                tablename = llex_lite.buff2str(),
+                name = llex_lite.buff2str(),
                 configs = new List<config>()
             };
             llex_lite.llex(sr, true);/* skip '{' */
@@ -95,12 +128,12 @@ namespace Lua
             return llex_lite.buff2str();
         }
 
-        public static void read_file(string path)
+        static void read_file(string path)
         {
             StreamReader sr = new StreamReader(path);
             table t = read_table(sr);
             StringBuilder sb = new StringBuilder();
-            Console.WriteLine("md5 = " + t.md5 + " tablename = " + t.tablename);
+            Console.WriteLine("md5 = " + t.md5 + " tablename = " + t.name);
             for(int i = 0; i < t.configs.Count; i++)
             {
                 config conf = t.configs[i];
@@ -108,11 +141,17 @@ namespace Lua
                 for(int j = 0; j < conf.properties.Count; j++)
                 {
                     property p = conf.properties[j];
-                    sb.Append(p.propertyname + " = " + p.value + " ");
+                    sb.Append(p.name + " = " + p.value + " ");
                 }
                 Console.WriteLine(sb.ToString());
                 sb.Clear();
             }
+        }
+
+        public static table parse(string path)
+        {
+            StreamReader sr = new StreamReader(path);
+            return read_table(sr);
         }
     }
 }
