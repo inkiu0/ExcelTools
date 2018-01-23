@@ -58,6 +58,14 @@ namespace Lua
         };
         #endregion
 
+        static Setting get_table_setting(table table)
+        {
+            Setting type = _NormalSetting;
+            if (_OptimalSetting.ContainsKey(table.name))
+                type = _OptimalSetting[table.name];
+            return type;
+        }
+
         public static void optimal(string path, string outpath)
         {
             table table = lparser.parse(path);
@@ -83,13 +91,6 @@ namespace Lua
         }
 
         #region Normal优化，即只抽取公共字段，将重复次数最多的值作为默认值
-        static Setting get_table_setting(table table)
-        {
-            Setting type = _NormalSetting;
-            if (_OptimalSetting.ContainsKey(table.name))
-                type = _OptimalSetting[table.name];
-            return type;
-        }
 
         /// <summary>
         /// 以LuaTable的第一条配置的所有属性作为base
