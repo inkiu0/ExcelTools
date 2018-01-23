@@ -233,7 +233,7 @@ namespace Lua
         /// <param name="basekvs"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        static string gen_base_metatable(Dictionary<string, string> basekvs, string key)
+        static string gen_baseconf_metatable(Dictionary<string, string> basekvs, string key)
         {
             StringBuilder sb = new StringBuilder(string.Format("[{0}] = {", key));
             int n = basekvs.Count;
@@ -248,7 +248,7 @@ namespace Lua
             return sb.ToString();
         }
 
-        static string gen_group_metatable(List<config> configs)
+        static string gen_grouponf_metatable(List<config> configs)
         {
             StringBuilder sb = new StringBuilder("{");
             for(int i = 0; i < configs.Count; i++)
@@ -261,10 +261,10 @@ namespace Lua
             return sb.ToString();
         }
 
-        static string gen_group(table table, Dictionary<string, List<config>> group)
+        static void build_datamap(Dictionary<string, List<config>> group, out Dictionary<string, Dictionary<string, string>> basedic, out Dictionary<List<config>, Dictionary<string, string>> groupdic)
         {
-            Dictionary<string, Dictionary<string, string>> basedic = new Dictionary<string, Dictionary<string, string>>();
-            Dictionary<List<config>, Dictionary<string, string>> groupdic = new Dictionary<List<config>, Dictionary<string, string>>();
+            basedic = new Dictionary<string, Dictionary<string, string>>();
+            groupdic = new Dictionary<List<config>, Dictionary<string, string>>();
             foreach (var list in group.Values)
             {
                 if (list.Count > 0)
@@ -280,8 +280,10 @@ namespace Lua
                     groupdic.Add(list, basekvs);
                 }
             }
+        }
 
-            //去除不需要生成的属性
+        static void table_deduplication(ref table table, Dictionary<string, List<config>> group, Dictionary<string, Dictionary<string, string>> basedic)
+        {
             property temp;
             Dictionary<string, string> basekv = new Dictionary<string, string>();
             for (int i = 0; i < table.configs.Count; i++)
@@ -297,31 +299,46 @@ namespace Lua
                     }
                 }
             }
+        }
+
+        static string gen_group_metatable(Dictionary<List<config>, Dictionary<string, string>> groupdic)
+        {
+            StringBuilder __base = new StringBuilder("local __base = {\n");
+            StringBuilder __groups = new StringBuilder("local groups = {\n");
+            int n = groupdic.Count;
+            foreach (var item in groupdic)
+            {
+                n--;
+                __groups.Append(gen_grouponf_metatable(item.Key));
+                __base.Append(gen_baseconf_metatable(item.Value, item.Key[0].key));
+                if (n > 0)
+                {
+                    __groups.Append(",\n");
+                    __base.Append(",\n");
+                }
+                else
+                {
+                    __groups.Append("\n");
+                    __base.Append("\n");
+                }
+            }
+            __base.Append("for _,v in pairs(__base) do\n\tv.__index = v\nend\n");
+            __groups.Append("for i=1, #groups do\n\tfor j=1, #groups[i] do\n\t\tsetmetatable(%s[groups[i][j]], __base[groups[i][1]])\n\tend\nend\n");
+            return __base.ToString() + __groups.ToString();
+        }
+
+        static string gen_group(table table, Dictionary<string, List<config>> group)
+        {
+            Dictionary<string, Dictionary<string, string>> basedic;
+            Dictionary<List<config>, Dictionary<string, string>> groupdic;
+            build_datamap(group, out basedic, out groupdic);
+
+            //去除不需要生成的属性
+            table_deduplication(ref table, group, basedic);
 
             Func<string> genmeta = () =>
             {
-                StringBuilder __base = new StringBuilder("local __base = {\n");
-                StringBuilder __groups = new StringBuilder("local groups = {\n");
-                int n = groupdic.Count;
-                foreach (var item in groupdic)
-                {
-                    n--;
-                    __groups.Append(gen_group_metatable(item.Key));
-                    __base.Append(gen_base_metatable(item.Value, item.Key[0].key));
-                    if(n > 0)
-                    {
-                        __groups.Append(",\n");
-                        __base.Append(",\n");
-                    }
-                    else
-                    {
-                        __groups.Append("\n");
-                        __base.Append("\n");
-                    }
-                }
-                __base.Append("for _,v in pairs(__base) do\n\tv.__index = v\nend\n");
-                __groups.Append("for i=1, #groups do\n\tfor j=1, #groups[i] do\n\t\tsetmetatable(%s[groups[i][j]], __base[groups[i][1]])\n\tend\nend\n");
-                return __base.ToString() + __groups.ToString();
+                return gen_group_metatable(groupdic);
             };
             return table.GenString(genmeta);
         }
@@ -329,7 +346,7 @@ namespace Lua
         static string optimal_group(table table, Setting setting)
         {
             Dictionary<string, List<config>> group = partition_grop(table, setting.EigenValues);
-
+            gen_group(table, group);
             return string.Empty;
         }
         #endregion
