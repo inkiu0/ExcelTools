@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -71,6 +72,7 @@ namespace Lua
                     ret = optimal_group(table, ts);
                     break;
                 case Optimization.Skill:
+                    ret = optimal_skill(table);
                     break;
             }
 
@@ -197,7 +199,7 @@ namespace Lua
 
         #region Group优化，即分组优化，自动将特征值一致的配置分为同一组。然后抽取相同的值，作为元表。
 
-        static Dictionary<string, List<config>> partition_grop(table table, List<string> eigenvalues)
+        static List<List<config>> partition_grop(table table, List<string> eigenvalues)
         {
             Dictionary<string, List<config>> group = new Dictionary<string, List<config>>();
             int total = eigenvalues.Count;
@@ -224,7 +226,10 @@ namespace Lua
                 }
                 total = eigenvalues.Count;
             }
-            return group;
+            List<List<config>> grouplist = new List<List<config>>();
+            foreach (var list in group.Values)
+                grouplist.Add(list);
+            return grouplist;
         }
 
         /// <summary>
@@ -261,34 +266,35 @@ namespace Lua
             return sb.ToString();
         }
 
-        static void build_datamap(Dictionary<string, List<config>> group, out Dictionary<string, Dictionary<string, string>> basedic, out Dictionary<List<config>, Dictionary<string, string>> groupdic)
+        static void build_datamap(List<List<config>> group, out Dictionary<string, Dictionary<string, string>> basedic, out Dictionary<List<config>, Dictionary<string, string>> groupdic)
         {
             basedic = new Dictionary<string, Dictionary<string, string>>();
             groupdic = new Dictionary<List<config>, Dictionary<string, string>>();
-            foreach (var list in group.Values)
+            for (int i = 0; i < group.Count; i++)
             {
+                List<config> list = group[i];
                 if (list.Count > 0)
                 {
                     Dictionary<string, string> basekvs = get_basekvs(list);
-                    for (int i = 0; i < list.Count; i++)
+                    for (int j = 0; j < list.Count; j++)
                     {
-                        if (basedic.ContainsKey(list[i].key))
-                            Console.Error.WriteLine("已存在的key = " + list[i].key);
+                        if (basedic.ContainsKey(list[j].key))
+                            Console.Error.WriteLine("已存在的key = " + list[j].key);
                         else
-                            basedic.Add(list[i].key, basekvs);
+                            basedic.Add(list[j].key, basekvs);
                     }
                     groupdic.Add(list, basekvs);
                 }
             }
         }
 
-        static void table_deduplication(ref table table, Dictionary<string, List<config>> group, Dictionary<string, Dictionary<string, string>> basedic)
+        static void table_deduplication(ref table table, Dictionary<string, Dictionary<string, string>> basedic)
         {
             property temp;
             Dictionary<string, string> basekv = new Dictionary<string, string>();
             for (int i = 0; i < table.configs.Count; i++)
             {
-                if (group.ContainsKey(table.configs[i].key))
+                if (basedic.ContainsKey(table.configs[i].key))
                 {
                     basekv = basedic[table.configs[i].key];
                     for (int j = 0; j < table.configs[i].properties.Count; j++)
@@ -327,14 +333,14 @@ namespace Lua
             return __base.ToString() + __groups.ToString();
         }
 
-        static string gen_group(table table, Dictionary<string, List<config>> group)
+        static string gen_group(table table, List<List<config>> group)
         {
             Dictionary<string, Dictionary<string, string>> basedic;
             Dictionary<List<config>, Dictionary<string, string>> groupdic;
             build_datamap(group, out basedic, out groupdic);
 
             //去除不需要生成的属性
-            table_deduplication(ref table, group, basedic);
+            table_deduplication(ref table, basedic);
 
             Func<string> genmeta = () =>
             {
@@ -345,9 +351,110 @@ namespace Lua
 
         static string optimal_group(table table, Setting setting)
         {
-            Dictionary<string, List<config>> group = partition_grop(table, setting.EigenValues);
-            gen_group(table, group);
-            return string.Empty;
+            List<List<config>> group = partition_grop(table, setting.EigenValues);
+            return gen_group(table, group);
+        }
+        #endregion
+
+        #region Skill优化，即特殊化的Group优化。不是以特征值分组，而是以NextID链式的配置分为一组。
+
+        struct SkillGroupNode
+        {
+            public string nextid;
+            public config config;
+        }
+
+        static string get_nextid(config conf)
+        {
+            for(int i = 0; i < conf.properties.Count; i++)
+            {
+                if (conf.properties[i].name == "NextID" || conf.properties[i].name == "NextBreakID")
+                    return conf.properties[i].value;
+            }
+            return null;
+        }
+
+        static void insert_node(ref List<List<SkillGroupNode>> lists, List<SkillGroupNode> nodes)
+        {
+            //防止链表循环
+            //如果循环，则配置出现严重失误，配置了一个技能升级闭环
+            Debug.Assert(nodes.Last().nextid != nodes[0].config.key);
+            for (int i = 0; i < lists.Count; i++)
+            {
+                SkillGroupNode head = lists[i][0];
+                SkillGroupNode last = lists[i][lists.Count - 1];
+                if (head.config.key == nodes.Last().nextid)
+                {
+                    lists[i].InsertRange(0, nodes);
+                    lists.Remove(nodes);
+                    insert_node(ref lists, lists[i]);
+                }
+                else if (last.nextid == nodes[0].config.key)
+                {
+                    lists[i].AddRange(nodes);
+                    lists.Remove(nodes);
+                    insert_node(ref lists, lists[i]);
+                }
+            }
+        }
+
+        static void insert_node(ref List<List<SkillGroupNode>> lists, SkillGroupNode node)
+        {
+            for(int i = 0; i < lists.Count; i++)
+            {
+                SkillGroupNode head = lists[i][0];
+                SkillGroupNode last = lists[i][lists.Count - 1];
+                if (head.config.key == node.nextid)
+                {
+                    lists[i].Insert(0, node);
+                    insert_node(ref lists, lists[i]);
+                }
+                else if (last.nextid == node.config.key)
+                {
+                    lists[i].Add(node);
+                    insert_node(ref lists, lists[i]);
+                }
+                else
+                    lists.Add(new List<SkillGroupNode> { node });
+            }
+        }
+
+        static List<List<config>> build_group(table table)
+        {
+            List<List<SkillGroupNode>> lists = new List<List<SkillGroupNode>>();
+            for (int i = 0; i < table.configs.Count; i++)
+            {
+                string _Nextid = get_nextid(table.configs[i]);
+                if (_Nextid != null)
+                {
+                    SkillGroupNode node = new SkillGroupNode
+                    {
+                        nextid = _Nextid,
+                        config = table.configs[i]
+
+                    };
+                    insert_node(ref lists, node);
+                }
+            }
+            List<List<config>> group = new List<List<config>>();
+            for(int i = 0; i < lists.Count; i++)
+            {
+                group.Add(new List<config>());
+                for(int j = 0; j < 0; j++)
+                    group[i].Add(lists[i][j].config);
+            }
+            return group;
+        }
+
+        static List<List<config>> partition_grop(table table)
+        {
+            return build_group(table);
+        }
+
+        static string optimal_skill(table table)
+        {
+            List<List<config>> group = partition_grop(table);
+            return gen_group(table, group);
         }
         #endregion
     }
