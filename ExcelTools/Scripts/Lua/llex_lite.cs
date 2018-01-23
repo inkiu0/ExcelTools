@@ -292,7 +292,7 @@ namespace Lua
         static void read_table_asstring(StreamReader sr)
         {
             int bracket = 1;
-            next(sr);/* keep delimiter (for error messages) */
+            save_and_next(sr);/* keep delimiter (for error messages) */
             while (bracket > 0)
             {
                 switch (sr.Peek())
@@ -314,12 +314,12 @@ namespace Lua
                         break;
                 }
             }
-            endloop: next(sr); /* skip delimiter */
+            endloop: save_and_next(sr); /* skip delimiter */
         }
 
         static void read_string(StreamReader sr, int del)
         {
-            next(sr);/* keep delimiter (for error messages) */
+            save_and_next(sr);/* keep delimiter (for error messages) */
             while (sr.Peek() != del)
             {
                 switch (sr.Peek())
@@ -387,7 +387,7 @@ namespace Lua
                     #endregion
                 }
             }
-            next(sr); /* skip delimiter */
+            save_and_next(sr); /* skip delimiter */
             //seminfo = buff2str(1, 2);
         }
 
