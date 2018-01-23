@@ -1,6 +1,7 @@
 ﻿using NPOI.SS.UserModel;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 public class ExcelRow
@@ -22,14 +23,25 @@ public class ExcelRow
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
+        string str;
         for(int i = 0; i < cells.Count; i++)
         {
-            if(i == 0)
-                sb.AppendFormat("[{0}] = {{", cells[i].GetValue());
-            if (i != cells.Count - 1)
-                sb.AppendFormat("{0}, ", cells[i].ToString());
-            else
-                sb.AppendFormat("{0}}}", cells[i].ToString());
+            if (i == 0)
+            {
+                string id = cells[i].GetValue();
+                Debug.Assert(!string.IsNullOrWhiteSpace(id));
+                sb.AppendFormat("[{0}] = {{", id);
+            }
+            str = cells[i].ToString();
+            if (str != null)
+            {
+                if (i != cells.Count - 1)
+                    sb.AppendFormat("{0}, ", str);
+                else
+                    sb.Append(str);
+            }
+            if (i == cells.Count - 1)
+                sb.Append("}");
         }
         return sb.ToString();
     }

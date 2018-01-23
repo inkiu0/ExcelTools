@@ -20,7 +20,11 @@ public class ExcelCell
 
     public override string ToString()
     {
-        return propertyInfo.ename + " = " + GetValue();
+        string str = GetValue();
+        if (str != null)
+            return propertyInfo.ename + " = " + GetValue();
+        else
+            return null;
         //return string.Format("{0} = {1}", propertyInfo.ename, getvalue());
     }
 
@@ -28,7 +32,7 @@ public class ExcelCell
     {
         //C#中拼接字符串，固定表达式a + b + c会被优化成string.Concat(new string[]{ a, b, c })
         //性能最好
-        string ret = string.Empty;
+        string ret = null;
         switch (propertyInfo.type)
         {
             case "number":
@@ -38,8 +42,8 @@ public class ExcelCell
                     ret = n.ToString();
                 else if (content.IndexOf('.') > 0 && float.TryParse(content, out f))
                     ret = f.ToString();
-                else
-                    ret = "nil";
+                //else
+                //    ret = null;
                 break;
             case "string":
                 ret = content.Replace(@"\\", @"\\\\");
@@ -48,15 +52,18 @@ public class ExcelCell
                 //tmp = string.Format("'{0}'", tmp);
                 break;
             case "bittable":
-                int num = 0;
-                string[] bits = content.Split(',');
-                int bit;
-                for (int i = 0; i < bits.Length; i++)
+                if (!string.IsNullOrWhiteSpace(content))
                 {
-                    if(int.TryParse(bits[i].Trim(), out bit))
-                        num += 1 << (bit - 1);
+                    int num = 0;
+                    string[] bits = content.Split(',');
+                    int bit;
+                    for (int i = 0; i < bits.Length; i++)
+                    {
+                        if (int.TryParse(bits[i].Trim(), out bit))
+                            num += 1 << (bit - 1);
+                    }
+                    ret = num.ToString();
                 }
-                ret = num.ToString();
                 break;
             case "table":
                 if (!parent.parent.isServerTable && string.IsNullOrEmpty(content))
@@ -66,7 +73,6 @@ public class ExcelCell
                     //tmp = string.Format("{{{0}}}", content);
                 break;
             default:
-                ret = "nil";
                 break;
         }
         return ret;
