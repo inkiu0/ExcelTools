@@ -36,7 +36,7 @@ namespace Lua
         {
             {"Table_Equip",
                 new Setting(Optimization.Group, new List<string>()
-                { "Icon", "CanEquip", "Type", "EquipType" })
+                { "CanEquip", "Type", "EquipType" })
             },
             {"Table_Item",
                 new Setting(Optimization.Group, new List<string>()
@@ -84,10 +84,7 @@ namespace Lua
                     break;
             }
 
-            using (StreamWriter sw = File.CreateText(outpath))
-            {
-                sw.Write(ret);
-            }
+            FileUtil.OverWriteText(outpath, ret);
         }
 
         #region Normal优化，即只抽取公共字段，将重复次数最多的值作为默认值
@@ -215,10 +212,10 @@ namespace Lua
             {
                 for(int j = 0; j < table.configs[i].properties.Count; j++)
                 {
-                    idx = eigenvalues.IndexOf(table.configs[i].properties[i].name);
+                    idx = eigenvalues.IndexOf(table.configs[i].properties[j].name);
                     if(idx > -1)
                     {
-                        strs[idx] = table.configs[i].properties[i].value;
+                        strs[idx] = table.configs[i].properties[j].value;
                         total--;
                     }
                 }
@@ -234,7 +231,10 @@ namespace Lua
             }
             List<List<config>> grouplist = new List<List<config>>();
             foreach (var list in group.Values)
-                grouplist.Add(list);
+            {
+                if(list.Count > 1)
+                    grouplist.Add(list);
+            }
             return grouplist;
         }
 
@@ -246,7 +246,7 @@ namespace Lua
         /// <returns></returns>
         static string gen_baseconf_metatable(Dictionary<string, string> basekvs, string key)
         {
-            StringBuilder sb = new StringBuilder(string.Format("[{0}] = {", key));
+            StringBuilder sb = new StringBuilder(string.Format("[{0}] = {{", key));
             int n = basekvs.Count;
             foreach(var item in basekvs)
             {
@@ -279,23 +279,28 @@ namespace Lua
             for (int i = 0; i < group.Count; i++)
             {
                 List<config> list = group[i];
-                if (list.Count > 0)
+                if (list.Count > 1)
                 {
                     Dictionary<string, string> basekvs = get_basekvs(list);
-                    for (int j = 0; j < list.Count; j++)
+                    if (basekvs.Count > 0)
                     {
-                        if (basedic.ContainsKey(list[j].key))
-                            Console.Error.WriteLine("已存在的key = " + list[j].key);
-                        else
-                            basedic.Add(list[j].key, basekvs);
+                        for (int j = 0; j < list.Count; j++)
+                        {
+                            if (basedic.ContainsKey(list[j].key))
+                                Console.Error.WriteLine("已存在的key = " + list[j].key);
+                            else
+                                basedic.Add(list[j].key, basekvs);
+                        }
+                        groupdic.Add(list, basekvs);
                     }
-                    groupdic.Add(list, basekvs);
                 }
             }
         }
 
         static void table_deduplication(ref table table, Dictionary<string, Dictionary<string, string>> basedic)
         {
+            if (basedic.Count < 1)
+                return;
             property temp;
             Dictionary<string, string> basekv = new Dictionary<string, string>();
             for (int i = 0; i < table.configs.Count; i++)
@@ -307,13 +312,13 @@ namespace Lua
                     {
                         temp = table.configs[i].properties[j];
                         if (basekv.ContainsKey(temp.name) && basekv[temp.name] == temp.value)
-                            table.configs.RemoveAt(j);
+                            table.configs[i].properties.RemoveAt(j--);
                     }
                 }
             }
         }
 
-        static string gen_group_metatable(Dictionary<List<config>, Dictionary<string, string>> groupdic)
+        static string gen_group_metatable(Dictionary<List<config>, Dictionary<string, string>> groupdic, string tablename)
         {
             StringBuilder __base = new StringBuilder("local __base = {\n");
             StringBuilder __groups = new StringBuilder("local groups = {\n");
@@ -321,6 +326,8 @@ namespace Lua
             foreach (var item in groupdic)
             {
                 n--;
+                __groups.Append("\t");
+                __base.Append("\t");
                 __groups.Append(gen_grouponf_metatable(item.Key));
                 __base.Append(gen_baseconf_metatable(item.Value, item.Key[0].key));
                 if (n > 0)
@@ -334,8 +341,8 @@ namespace Lua
                     __base.Append("\n");
                 }
             }
-            __base.Append("for _,v in pairs(__base) do\n\tv.__index = v\nend\n");
-            __groups.Append("for i=1, #groups do\n\tfor j=1, #groups[i] do\n\t\tsetmetatable(%s[groups[i][j]], __base[groups[i][1]])\n\tend\nend\n");
+            __base.Append("}\nfor _,v in pairs(__base) do\n\tv.__index = v\nend\n");
+            __groups.AppendFormat("}}\nfor i=1, #groups do\n\tfor j=1, #groups[i] do\n\t\tsetmetatable({0}[groups[i][j]], __base[groups[i][1]])\n\tend\nend\n", tablename);
             return __base.ToString() + __groups.ToString();
         }
 
@@ -350,7 +357,7 @@ namespace Lua
 
             Func<string> genmeta = () =>
             {
-                return gen_group_metatable(groupdic);
+                return gen_group_metatable(groupdic, table.name);
             };
             return table.GenString(genmeta);
         }
@@ -388,7 +395,7 @@ namespace Lua
             for (int i = 0; i < lists.Count; i++)
             {
                 SkillGroupNode head = lists[i][0];
-                SkillGroupNode last = lists[i][lists.Count - 1];
+                SkillGroupNode last = lists[i][lists[i].Count - 1];
                 if (head.config.key == nodes.Last().nextid)
                 {
                     lists[i].InsertRange(0, nodes);
@@ -409,20 +416,21 @@ namespace Lua
             for(int i = 0; i < lists.Count; i++)
             {
                 SkillGroupNode head = lists[i][0];
-                SkillGroupNode last = lists[i][lists.Count - 1];
+                SkillGroupNode last = lists[i][lists[i].Count - 1];
                 if (head.config.key == node.nextid)
                 {
                     lists[i].Insert(0, node);
                     insert_node(ref lists, lists[i]);
+                    return;
                 }
                 else if (last.nextid == node.config.key)
                 {
                     lists[i].Add(node);
                     insert_node(ref lists, lists[i]);
+                    return;
                 }
-                else
-                    lists.Add(new List<SkillGroupNode> { node });
             }
+            lists.Add(new List<SkillGroupNode> { node });
         }
 
         static List<List<config>> build_group(table table)
@@ -446,7 +454,7 @@ namespace Lua
             for(int i = 0; i < lists.Count; i++)
             {
                 group.Add(new List<config>());
-                for(int j = 0; j < 0; j++)
+                for(int j = 0; j < lists[i].Count; j++)
                     group[i].Add(lists[i][j].config);
             }
             return group;

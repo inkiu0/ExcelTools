@@ -188,6 +188,17 @@ class FileUtil
         return path + "/";
     }
 
+    public static void OverWriteText(string path, string contents)
+    {
+        string dir = Path.GetDirectoryName(path);
+        if (!Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+        using (StreamWriter sw = File.CreateText(path))
+        {
+            sw.Write(contents);
+        }
+    }
+
     public static string PathCombine(params string[] paths)
     {
         var path = Path.Combine(paths);
