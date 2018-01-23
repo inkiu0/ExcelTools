@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Lua.llex_lite;
 
 namespace Lua
 {
@@ -124,7 +125,8 @@ namespace Lua
 
         static string read_md5comment(StreamReader sr)
         {
-            llex_lite.llex(sr);
+            int e = llex_lite.llex(sr);
+            Debug.Assert(e == (int)LEXTYPE.COMMENT);
             return llex_lite.buff2str();
         }
 

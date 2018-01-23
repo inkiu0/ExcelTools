@@ -13,45 +13,18 @@ namespace Lua
     /// </summary>
     class llex_lite
     {
-        const int FIRST_RESERVED = 257;
+        const int FIRST_TYPE = 257;
         const int UCHAR_MAX = 0xff;
 
-        /* ORDER RESERVED */
-        static List<string> luaX_tokens = new List<string>(){
-            "and", "break", "do", "else", "elseif",
-            "end", "false", "for", "function", "goto", "if",
-            "in", "local", "nil", "not", "or", "repeat",
-            "return", "then", "true", "until", "while",
-            "//", "..", "...", "==", ">=", "<=", "~=",
-            "<<", ">>", "::", "<eof>",
-            "<number>", "<integer>", "<name>", "<string>"
+        public enum LEXTYPE
+        {
+            NAME = FIRST_TYPE, STRING, NUMBER, TABLE, KEY, COMMENT, EOS
         };
 
-        /*
-        * WARNING: if you change the order of this enumeration,
-        * grep "ORDER RESERVED"
-        */
-        enum RESERVED
-        {
-            /* terminal symbols denoted by reserved words */
-            TK_AND = FIRST_RESERVED, TK_BREAK,
-            TK_DO, TK_ELSE, TK_ELSEIF, TK_END, TK_FALSE, TK_FOR, TK_FUNCTION,
-            TK_GOTO, TK_IF, TK_IN, TK_LOCAL, TK_NIL, TK_NOT, TK_OR, TK_REPEAT,
-            TK_RETURN, TK_THEN, TK_TRUE, TK_UNTIL, TK_WHILE,
-            /* other terminal symbols */
-            TK_IDIV, TK_CONCAT, TK_DOTS, TK_EQ, TK_GE, TK_LE, TK_NE,
-            TK_SHL, TK_SHR,
-            TK_DBCOLON, TK_EOS,
-            TK_FLT, TK_INT, TK_NAME, TK_STRING
-        };
-
-        /* number of reserved words */
-        const int NUM_RESERVED = (int)RESERVED.TK_WHILE - FIRST_RESERVED + 1;
-
-        static int isreserved(string ts)
-        {
-            return luaX_tokens.IndexOf(ts);
-        }
+        //static int isreserved(string ts)
+        //{
+        //    return luaX_tokens.IndexOf(ts);
+        //}
 
         static bool currIsNewline(StreamReader sr)
         {
@@ -215,7 +188,7 @@ namespace Lua
          * this function is quite liberal in what it accepts, as 'lua0_str2num'
          * will reject ill-formed numerals.
          */
-        static int read_numeral(StreamReader sr)
+        static void read_numeral(StreamReader sr)
         {
             string expo = "Ee";
             int first = sr.Peek();
@@ -243,7 +216,6 @@ namespace Lua
             //    return (int)RESERVED.TK_FLT;
             //else
             //    Console.Error.WriteLine("malformed number");
-            return (int)RESERVED.TK_INT;
         }
 
         static void read_key(StreamReader sr)
@@ -419,40 +391,37 @@ namespace Lua
                             next(sr);/* 跳过第二个-号 */
                             while (!currIsNewline(sr) && sr.Peek() != '\0')
                                 save_and_next(sr);
-                            return (int)RESERVED.TK_STRING;
+                            return (int)LEXTYPE.COMMENT;
                         }
                         else
                             save('-');
                         break;
                     case '[':
                         read_key(sr);
-                        return (int)RESERVED.TK_STRING;
+                        return (int)LEXTYPE.KEY;
                     case '{':
                         if (skip)/* skip '{' */
                             return next(sr);
                         read_table_asstring(sr);
-                        return (int)RESERVED.TK_STRING;
+                        return (int)LEXTYPE.TABLE;
                     case '"': case '\'':
                         read_string(sr, sr.Peek());
-                        return (int)RESERVED.TK_STRING;
+                        return (int)LEXTYPE.STRING;
                     case '0': case '1': case '2': case '3': case '4':
                     case '5': case '6': case '7': case '8': case '9':
-                        return read_numeral(sr);/* 读取数字 */
+                        read_numeral(sr);/* 读取数字 */
+                        return (int)LEXTYPE.NUMBER;
                     default:/* 读取变量名或其他零散字符，比如',' '}' '=' */
                         if (lislalpha(sr.Peek()))/* identifier or reserved word? */
                         {
                             do { save_and_next(sr); } while (lislalnum(sr.Peek()));
                             string seminfo = buff2str();
-                            int n = isreserved(seminfo);
-                            if (n > -1)
-                                return n + FIRST_RESERVED;
-                            else
-                                return (int)RESERVED.TK_NAME;
+                            return (int)LEXTYPE.NAME;
                         }
                         return next(sr);
                 }
             }
-            return (int)RESERVED.TK_STRING;
+            return (int)LEXTYPE.EOS;
         }
     }
 }
