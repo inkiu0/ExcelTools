@@ -21,11 +21,6 @@ namespace Lua
             NAME = FIRST_TYPE, STRING, NUMBER, TABLE, KEY, COMMENT, EOS
         };
 
-        //static int isreserved(string ts)
-        //{
-        //    return luaX_tokens.IndexOf(ts);
-        //}
-
         static bool currIsNewline(StreamReader sr)
         {
             return sr.Peek() == '\n' || sr.Peek() == '\r';
