@@ -105,7 +105,9 @@ namespace Lua
                 config baseconfig = configs[0];
                 for (int i = 0; i < baseconfig.properties.Count; i++)
                 {
-                    basedic.Add(baseconfig.properties[i].name, new Dictionary<string, int>{ { baseconfig.properties[i].value, 1 } });
+                    //id字段不能成为基础属性，因为没有复用的必要
+                    if(baseconfig.properties[i].name != "id")
+                        basedic.Add(baseconfig.properties[i].name, new Dictionary<string, int>{ { baseconfig.properties[i].value, 1 } });
                 }
             }
             return basedic;
@@ -114,7 +116,7 @@ namespace Lua
         static Dictionary<string, string> count_baseKVs(Dictionary<string, Dictionary<string, int>> basedic)
         {
             Dictionary<string, string> basekv = new Dictionary<string, string>();
-            string val = string.Empty;
+            string val = null;
             int count = 1;
             foreach(var item in basedic)
             {
@@ -126,8 +128,11 @@ namespace Lua
                         count = vs.Value;
                     }
                 }
-                basekv.Add(item.Key, val);
-                val = string.Empty; count = 1;
+                if (val != null)
+                    basekv.Add(item.Key, val);
+                else
+                    basekv.Remove(item.Key);
+                val = null; count = 1;
             }
             return basekv;
         }
@@ -152,7 +157,7 @@ namespace Lua
                 {
                     temp = table.configs[i].properties[j];
                     if (basekv.ContainsKey(temp.name) && basekv[temp.name] == temp.value)
-                        table.configs.RemoveAt(j);
+                        table.configs[i].properties.RemoveAt(j--);
                 }
             }
 

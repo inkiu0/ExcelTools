@@ -33,7 +33,7 @@ namespace Lua
                 }
                 sb.Append("}\n");
                 sb.Append(callback());
-                sb.Append("return" + name);
+                sb.Append("return " + name);
                 return sb.ToString();
             }
         }
