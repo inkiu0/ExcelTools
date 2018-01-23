@@ -132,7 +132,7 @@ namespace Lua
             return basekv;
         }
 
-        static void swap_properties_base(Dictionary<string, Dictionary<string, int>> o, Dictionary<string, Dictionary<string, int>> n)
+        static void swap_properties_base(ref Dictionary<string, Dictionary<string, int>> o, ref Dictionary<string, Dictionary<string, int>> n)
         {
             Dictionary<string, Dictionary<string, int>> temp = o;
             o = n;
@@ -173,7 +173,7 @@ namespace Lua
             Dictionary<string, Dictionary<string, int>> newbase = new Dictionary<string, Dictionary<string, int>>();
             property temp;
             //configs在构造时即为 new List<string>()，一定不为空
-            for (int i = 0; i < configs.Count; i++)
+            for (int i = 1; i < configs.Count; i++)
             {
                 for (int j = 0; j < configs[i].properties.Count; j++)
                 {
@@ -187,7 +187,7 @@ namespace Lua
                             newbase[temp.name].Add(temp.value, 1);
                     }
                 }
-                swap_properties_base(basedic, newbase);
+                swap_properties_base(ref basedic, ref newbase);
             }
             return count_baseKVs(basedic);
         }
