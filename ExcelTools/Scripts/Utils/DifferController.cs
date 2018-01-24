@@ -78,14 +78,16 @@ namespace ExcelTools.Scripts.Utils
                 _modifiedList.Clear();
                 for (int i = 0; i < tempExcel.rows.Count; i++)
                 {
-                    if (!localExcelTmp.Contains(tempExcel.rows[i].ToString()))
+                    string rowStr = tempExcel.rows[i].ToString();
+                    if (rowStr != null &&!localExcelTmp.Contains(rowStr))
                     {
                         _deletedList.Add(i + 5);
                     }
                 }
                 for (int i = 0; i < localExcel.rows.Count; i++)
                 {
-                    if (!tempTmp.Contains(localExcel.rows[i].ToString()))
+                    string rowStr = localExcel.rows[i].ToString();
+                    if (rowStr != null &&!tempTmp.Contains(rowStr))
                     {
                         _addedList.Add(i + 5);
                         _addedToList.Add(i + 5);
