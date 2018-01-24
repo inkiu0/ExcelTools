@@ -297,6 +297,17 @@ namespace Lua
                     case '\n': case '\r':
                         Console.Error.WriteLine(@"unfinished string. last char is \n or \r");
                         break;/* to avoid warnings */
+                    case '\\':/* save and skip '\''  */
+                        save_and_next(sr);
+                        switch(sr.Peek())
+                        {
+                            case '\'':
+                                save_and_next(sr);
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
                     default:
                         save_and_next(sr);
                         break;
