@@ -29,7 +29,8 @@ public class ExcelRow
             if (i == 0)
             {
                 string id = cells[i].GetValue();
-                Debug.Assert((!string.IsNullOrWhiteSpace(id)));
+                if (string.IsNullOrWhiteSpace(id))
+                    return null;
                 sb.AppendFormat("[{0}] = {{", id);
             }
             str = cells[i].ToString();

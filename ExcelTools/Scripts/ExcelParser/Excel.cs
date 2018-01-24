@@ -60,15 +60,20 @@ public class Excel
     public override string ToString()
     {
         if (!success) return string.Empty;
+        string str;
         //用+号拼接的字符串分开Add可以略微提升性能，几毫秒级别，为了可读性不做优化。
         List<string> strList = new List<string>();
         strList.Add(tableName + "= {\n");
         for (int i = 0; i < rows.Count; i++)
         {
-            if (i == rows.Count - 1)
-                strList.Add("\t" + rows[i].ToString() + "\n");
-            else
-                strList.Add("\t" + rows[i].ToString() + ",\n");
+            str = rows[i].ToString();
+            if (str != null)
+            {
+                if (i == rows.Count - 1)
+                    strList.Add("\t" + rows[i].ToString() + "\n");
+                else
+                    strList.Add("\t" + rows[i].ToString() + ",\n");
+            }
         }
         strList.Add("}\nreturn " + tableName);
         return string.Concat(strList.ToArray());
