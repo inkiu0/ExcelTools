@@ -35,8 +35,15 @@ public class Excel
             return _PropertyNums;
         }
     }
+    public List<PropertyInfo> Properties
+    {
+        get
+        {
+            return _Properties;
+        }
+    }
 
-    public Excel(ISheet sheet)
+    private Excel(ISheet sheet)
     {
         mainSheet = sheet;
     }

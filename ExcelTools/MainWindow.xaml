@@ -5,15 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:custom="clr-namespace:ExcelTools.Scripts.UI"
         mc:Ignorable="d"
-        Title="配置表工具" Height="600" Width="800" Loaded="Window_Loaded">
+        Title="配置表工具" Height="600" Width="1000" Loaded="Window_Loaded">
     <Grid>
-        <ListView Margin="18,10,20,70" Name="fileListView" ItemsSource="{Binding}">
+        <ListView Margin="10,80,787,10" Name="tabelListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="150"/>
-                    <GridViewColumn Header="C/S" DisplayMemberBinding="{Binding ClientServer}" Width="100"/>
-                    <GridViewColumn Header="Status" DisplayMemberBinding="{Binding Status}" Width="50"/>
-                    <GridViewColumn Header="Path" DisplayMemberBinding="{Binding FilePath}" Width="500"/>
+                    <GridViewColumn Header="表格" DisplayMemberBinding="{Binding Name}" Width="190"/>
                 </GridView>
             </ListView.View>
             <ListView.ItemContainerStyle>
@@ -32,9 +29,49 @@
                 </Style>
             </ListView.ItemContainerStyle>
         </ListView>
-        <Button Content="检查状态" Click ="CheckStateBtn_Click" Name ="checkStateBtn" HorizontalAlignment="Right" Margin="0,0,20,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
-        <Button Content="功能" Click ="MultiFuncBtn_Click" Name="multiFuncBtn" HorizontalAlignment="Right" Margin="0,0,137,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
-        <Button Content="更改表格路径" Click ="ChangeSourcePath_Click" Name="changePathBtn" HorizontalAlignment="Right" Margin="0,0,260,20" VerticalAlignment="Bottom" Width="103" Height="30"/>
+        <ListView Margin="273,80,449,10" x:Name="propertyListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="字段名" DisplayMemberBinding="{Binding PropertyName}" Width="100"/>
+                    <GridViewColumn Header="本地内容" DisplayMemberBinding="{Binding Context}" Width="165"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <ListView Margin="210,80,724,10" x:Name="idListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden" ItemsSource="{Binding}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ID}" Width="53" />
+                </GridView>
+            </ListView.View>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="{x:Type ListViewItem}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=State}" Value="modified">
+                            <Setter Property="Foreground" Value="Blue"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=State}" Value="deleted">
+                            <Setter Property="Foreground" Value="Blue"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=State}" Value="added">
+                            <Setter Property="Foreground" Value="Blue"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ListView.ItemContainerStyle>
+        </ListView>
+        <ListView Margin="548,80,40,10" x:Name="branchListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Trunk" DisplayMemberBinding="{Binding Trunk}" Width="100"/>
+                    <GridViewColumn Header="Studio" DisplayMemberBinding="{Binding Studio}" Width="100"/>
+                    <GridViewColumn Header="TF" DisplayMemberBinding="{Binding TF}" Width="100"/>
+                    <GridViewColumn Header="Release" DisplayMemberBinding="{Binding Release}" Width="100"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <Button Content="检查状态" Click ="CheckStateBtn_Click" Name ="checkStateBtn" Margin="416,0,469,506" VerticalAlignment="Bottom" Height="30" Width="100"/>
+        <Button Content="功能" Click ="MultiFuncBtn_Click" Name="multiFuncBtn" Margin="299,0,592,506" VerticalAlignment="Bottom" Height="30" Width="100"/>
+        <Button Content="更改表格路径" Click ="ChangeSourcePath_Click" Name="changePathBtn" Margin="157,0,714,506" VerticalAlignment="Bottom" Height="30" Width="100"/>
 
     </Grid>
 </Window>

@@ -75,9 +75,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="DifferWindow.xaml.cs">
-      <DependentUpon>DifferWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Scripts\Data\RefactoryTable.cs" />
     <Compile Include="Scripts\ExcelParser\ExcelCell.cs" />
     <Compile Include="Scripts\ExcelParser\ExcelParser.cs" />
@@ -87,17 +84,21 @@
     <Compile Include="Scripts\ExcelParser\Excel.cs" />
     <Compile Include="Scripts\ExcelParser\ZipFile.cs" />
     <Compile Include="Scripts\GlobalCfg.cs" />
-    <Compile Include="Scripts\UI\DiffItem.cs" />
+    <Compile Include="Scripts\Lua\llex.cs" />
+    <Compile Include="Scripts\Lua\llex_lite.cs" />
+    <Compile Include="Scripts\Lua\loptimal.cs" />
+    <Compile Include="Scripts\Lua\lparser.cs" />
+    <Compile Include="Scripts\Lua\LuaDLL.cs" />
+    <Compile Include="Scripts\Lua\LuaDLLWrapper.cs" />
+    <Compile Include="Scripts\UI\BranchListItem.cs" />
     <Compile Include="Scripts\UI\ExcelFileListItem.cs" />
+    <Compile Include="Scripts\UI\FieldListItem.cs" />
+    <Compile Include="Scripts\UI\IDListItem.cs" />
     <Compile Include="Scripts\Utils\CommandHelper.cs" />
     <Compile Include="Scripts\Utils\DifferController.cs" />
     <Compile Include="Scripts\Utils\ExcelParserFileHelper.cs" />
     <Compile Include="Scripts\Utils\FileUtil.cs" />
     <Compile Include="Scripts\Utils\SVNHelper.cs" />
-    <Page Include="DifferWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

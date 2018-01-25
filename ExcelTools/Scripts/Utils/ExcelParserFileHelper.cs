@@ -116,7 +116,7 @@ public class ExcelParserFileHelper
         fname = string.Format("Table_{0}{1}", fname, _TextExt);
         string targetPath = string.Empty;
         if (isServer)
-            targetPath = FileUtil.PathCombine(GlobalCfg._SourcePath, target_server_table_path, fname);
+            targetPath = FileUtil.PathCombine(GlobalCfg.SourcePath, target_server_table_path, fname);
         else if (path.IndexOf("SubConfigs") > -1)
         {
             string dir = path.Substring(path.IndexOf("SubConfigs")+ 11, path.LastIndexOf("/") - (path.IndexOf("SubConfigs") + 11) + 1);
@@ -125,10 +125,10 @@ public class ExcelParserFileHelper
                 dir = "Config_" + dir;
                 targetPath = target_client_table_path.Replace("Config", dir);
             }
-            targetPath = FileUtil.PathCombine(GlobalCfg._SourcePath, targetPath, fname);
+            targetPath = FileUtil.PathCombine(GlobalCfg.SourcePath, targetPath, fname);
         }
         else
-            targetPath = FileUtil.PathCombine(GlobalCfg._SourcePath, target_client_table_path, fname);
+            targetPath = FileUtil.PathCombine(GlobalCfg.SourcePath, target_client_table_path, fname);
         return targetPath;
     }
 
@@ -138,7 +138,7 @@ public class ExcelParserFileHelper
         fname = string.Format("Table_{0}{1}", fname, _TextExt);
         string tempPath = string.Empty;
         if (isServer)
-            tempPath = FileUtil.PathCombine(GlobalCfg._SourcePath, temp_server_table_path, fname);
+            tempPath = FileUtil.PathCombine(GlobalCfg.SourcePath, temp_server_table_path, fname);
         else if (path.IndexOf("SubConfigs") > -1)
         {
             int idx = path.IndexOf("SubConfigs");
@@ -147,10 +147,10 @@ public class ExcelParserFileHelper
                 string dir = "Config_" + path.Substring(idx);
                 tempPath = temp_client_table_path.Replace("Config", dir);
             }
-            tempPath = FileUtil.PathCombine(GlobalCfg._SourcePath, tempPath, fname);
+            tempPath = FileUtil.PathCombine(GlobalCfg.SourcePath, tempPath, fname);
         }
         else
-            tempPath = FileUtil.PathCombine(GlobalCfg._SourcePath, temp_client_table_path, fname);
+            tempPath = FileUtil.PathCombine(GlobalCfg.SourcePath, temp_client_table_path, fname);
         return tempPath;
     }
 }

@@ -8,6 +8,9 @@ using System.Windows.Data;
 using ExcelTools.Scripts.Utils;
 using ExcelTools.Scripts;
 using System.ComponentModel;
+using System.Windows.Input;
+using ExcelTools.Scripts.UI;
+using Lua;
 
 namespace ExcelTools
 {
@@ -48,17 +51,18 @@ namespace ExcelTools
         {
             LoadConfig();
             Refresh();
-            fileListView.DataContext = view;
-            fileListView.MouseDoubleClick += FileListView_MouseDoubleClick;
-            fileListView.Items.SortDescriptions.Add(new SortDescription("Status", ListSortDirection.Descending));
-            fileListView.Items.IsLiveSorting = true;
+            tabelListView.DataContext = view;
+            tabelListView.MouseDoubleClick += FileListView_MouseDoubleClick;
+            idListView.MouseDoubleClick += IDListView_MouseDoubleClick;
+            tabelListView.Items.SortDescriptions.Add(new SortDescription("Status", ListSortDirection.Descending));
+            tabelListView.Items.IsLiveSorting = true;
             GetRevision();
         }
 
         private void Refresh()
         {
-            _Folders[0] = GlobalCfg._SourcePath + _FolderServerExvel;
-            _Folders[1] = GlobalCfg._SourcePath + _FolderSubConfigs;
+            _Folders[0] = GlobalCfg.SourcePath + _FolderServerExvel;
+            _Folders[1] = GlobalCfg.SourcePath + _FolderSubConfigs;
             _ExcelFiles.Clear();
             List<string> files = FileUtil.CollectAllFolders(_Folders, _Ext);
             for (int i = 0; i < files.Count; i++)
@@ -83,7 +87,7 @@ namespace ExcelTools
             }
             using (StreamReader cfgSt = new StreamReader(_ConfigPath))
             {    
-                GlobalCfg._SourcePath = cfgSt.ReadLine();
+                GlobalCfg.SourcePath = cfgSt.ReadLine();
                 cfgSt.Close();    
             }        
         }
@@ -134,16 +138,18 @@ namespace ExcelTools
                 return;
             }
             JudgeMultiFuncBtnState();
+            idListView.ItemsSource = null;
+            propertyListView.ItemsSource = null;
+            branchListView.ItemsSource = null;
             if (item.Status == SVNHelper.STATE_MODIFIED)
             {
                 //ExcelParser.ParseTemp(item.FilePath);
                 string tmpExlPath = item.FilePath.Remove(item.FilePath.LastIndexOf('/') + 1) + Path.GetFileNameWithoutExtension(item.FilePath) + _TempRename + _Ext;
                 _DiffDic[item.FilePath] = new DifferController(item.FilePath, tmpExlPath);
                 _DiffDic[item.FilePath].Differ();
-                if (_DiffDic[item.FilePath].DiffItems.Count > 0)
+                if (_DiffDic[item.FilePath].IDListItems.Count > 0)
                 {
-                    DifferWindow differWindow = new DifferWindow(item.Name, _DiffDic[item.FilePath].DiffItems);
-                    differWindow.Show();
+                    idListView.ItemsSource = _DiffDic[item.FilePath].IDListItems;
                 }
             }
             else
@@ -152,9 +158,73 @@ namespace ExcelTools
             }
         }
 
+        private void IDListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ListView listView = sender as ListView;
+            IDListItem item = listView.SelectedItem as IDListItem;
+            Excel excel = GlobalCfg.Instance.GetParsedExcel(_listItemChoosed.FilePath);
+            List<PropertyInfo> propertyList = excel.Properties;
+            ObservableCollection<PropertyListItem> fieldList = new ObservableCollection<PropertyListItem>();
+            ObservableCollection<BranchListItem> branchList = new ObservableCollection<BranchListItem>();
+
+            int trunkCfgIndex = 0;
+            int studioCfgIndex = 0;
+            int tfCfgIndex = 0;
+            int releaseCfgIndex = 0;
+            List<lparser.table> tables = GlobalCfg.Instance.GetlTable(_listItemChoosed.FilePath);
+            for (int i = 0; i < tables[0].configs.Count; i++)
+            {
+                if (tables[0].configs[i].key == item.ID.ToString())
+                {
+                    trunkCfgIndex = i;
+                }
+            }
+            for (int i = 0; i < tables[1].configs.Count; i++)
+            {
+                if (tables[0].configs[i].key == item.ID.ToString())
+                {
+                    studioCfgIndex = i;
+                }
+            }
+            for (int i = 0; i < tables[2].configs.Count; i++)
+            {
+                if (tables[0].configs[i].key == item.ID.ToString())
+                {
+                    tfCfgIndex = i;
+                }
+            }
+            for (int i = 0; i < tables[3].configs.Count; i++)
+            {
+                if (tables[0].configs[i].key == item.ID.ToString())
+                {
+                    releaseCfgIndex = i;
+                }
+            }
+
+            for (int i = 0; i < propertyList.Count; i++)
+            {
+                fieldList.Add(new PropertyListItem()
+                {
+                    PropertyName = propertyList[i].cname,
+                    Context = excel.rows[item.Row - 5].cells[i].GetValue()
+                });
+            }
+            for(int i = 0; i < tables[0].configs[trunkCfgIndex].properties.Count; i++)
+            {
+                branchList.Add(new BranchListItem()
+                {
+                    Trunk = tables[0].configs[trunkCfgIndex].properties[i].value,
+                    Studio = tables[1].configs[studioCfgIndex].properties[i].value,
+                    TF = tables[2].configs[tfCfgIndex].properties[i].value,
+                    Release = tables[3].configs[releaseCfgIndex].properties[i].value
+                });
+            }
+            propertyListView.ItemsSource = fieldList;
+            branchListView.ItemsSource = branchList;
+        }
+
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
         {
-            ExcelParser.ParseAll();
             Dictionary<string, string> statusDic = SVNHelper.Status(_Folders[0], _Folders[1]);
             for(int i = 0; i < _ExcelFiles.Count; i++)
             {

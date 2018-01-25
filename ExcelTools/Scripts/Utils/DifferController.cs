@@ -40,16 +40,16 @@ namespace ExcelTools.Scripts.Utils
         private List<int> _cancelList = new List<int>();
 
         #region 以下为UI绑定数据及设置
-        private ObservableCollection<DiffItem> _diffItems;
-        public ObservableCollection<DiffItem> DiffItems
+        private ObservableCollection<IDListItem> _idListItems;
+        public ObservableCollection<IDListItem> IDListItems
         {
             get
             {
-                if(_diffItems == null)
+                if(_idListItems == null)
                 {
-                    _diffItems = new ObservableCollection<DiffItem>();
+                    _idListItems = new ObservableCollection<IDListItem>();
                 }
-                return _diffItems;
+                return _idListItems;
             }
         }
         #endregion
@@ -62,8 +62,8 @@ namespace ExcelTools.Scripts.Utils
 
         public bool Differ()
         {
-            Excel localExcel = Excel.Parse(_localPath, false);
-            Excel tempExcel = Excel.Parse(_tempPath, false);
+            Excel localExcel = GlobalCfg.Instance.GetParsedExcel(_localPath);
+            Excel tempExcel = GlobalCfg.Instance.GetParsedExcel(_tempPath);
             string localExcelTmp = localExcel.ToString();
             string tempTmp = tempExcel.ToString();
             if (localExcelTmp == tempTmp)
@@ -106,25 +106,25 @@ namespace ExcelTools.Scripts.Utils
         //刷新UI绑定的数据
         private void RefreshUIData()
         {
-            DiffItems.Clear();
+            IDListItems.Clear();
             for (int i = 0; i < _modifiedList.Count; i++)
             {
-                DiffItems.Add(new DiffItem()
+                IDListItems.Add(new IDListItem()
                 {
+                    ID = _modifiedList[i] - 4,
                     Row = _modifiedList[i],
                     State = "modified",
-                    Context = Excel.Parse(_localPath, false).rows[_modifiedList[i] - 5].ToStringWithOutIndex()
                 });
             }
             for (int i = 0; i < _addedList.Count; i++)
             {
                 if (!_modifiedList.Contains(_addedList[i]))
                 {
-                    DiffItems.Add(new DiffItem()
+                    IDListItems.Add(new IDListItem()
                     {
+                        ID = _addedList[i] - 4,
                         Row = _addedList[i],
                         State = "added",
-                        Context = Excel.Parse(_localPath, false).rows[_addedList[i] - 5].ToStringWithOutIndex()
                     });
                 }
             }
@@ -132,11 +132,11 @@ namespace ExcelTools.Scripts.Utils
             {
                 if (!_modifiedList.Contains(_deletedList[i]))
                 {
-                    DiffItems.Add(new DiffItem()
+                    IDListItems.Add(new IDListItem()
                     {
+                        ID = _deletedList[i] - 4,
                         Row = _deletedList[i],
                         State = "deleted",
-                        Context = Excel.Parse(_tempPath, false).rows[_deletedList[i] - 5].ToStringWithOutIndex()
                     });
                 }
             }

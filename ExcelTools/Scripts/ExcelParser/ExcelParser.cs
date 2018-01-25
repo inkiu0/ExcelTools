@@ -49,11 +49,11 @@ class ExcelParser
 
     public static void ParseAll()
     {
-        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg._SourcePath, ".."));
-        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg._SourcePath, target_client_table_path));
+        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg.SourcePath, ".."));
+        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg.SourcePath, target_client_table_path));
         _NeedImportClient.Clear();
         _NeedImportServer.Clear();
-        List<string> files = FileUtil.CollectFolder(GlobalCfg._SourcePath, _ExcelExt, instance.MatchExcelFile);
+        List<string> files = FileUtil.CollectFolder(GlobalCfg.SourcePath, _ExcelExt, instance.MatchExcelFile);
         #region 生成Table.txt的Client和Server版本
         GenTableImportFile();
         #endregion
@@ -72,8 +72,8 @@ class ExcelParser
     //版本库中最新的表格若未生成配置则生成临时配置
     public static void ParseTemp(string exlPath)
     {
-        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg._SourcePath, ".."));
-        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg._SourcePath, target_client_table_path));
+        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg.SourcePath, ".."));
+        SVNHelper.Update(FileUtil.PathCombine(GlobalCfg.SourcePath, target_client_table_path));
         instance.MatchExcelFile(exlPath, null, null);
         GenTableImportFile();
     }
