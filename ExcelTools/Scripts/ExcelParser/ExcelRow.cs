@@ -33,13 +33,16 @@ public class ExcelRow
                     return null;
                 sb.AppendFormat("[{0}] = {{", id);
             }
-            str = cells[i].ToString();
-            if (str != null)
+            if (parent.isServerTable || !cells[i].propertyInfo.isServerProperty)
             {
-                if (i != cells.Count - 1)
-                    sb.AppendFormat("{0}, ", str);
-                else
-                    sb.Append(str);
+                str = cells[i].ToString();
+                if (str != null)
+                {
+                    if (i != cells.Count - 1)
+                        sb.AppendFormat("{0}, ", str);
+                    else
+                        sb.Append(str);
+                }
             }
             if (i == cells.Count - 1)
                 sb.Append("}");

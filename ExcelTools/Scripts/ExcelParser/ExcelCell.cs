@@ -9,7 +9,7 @@ public class ExcelCell
 {
     private int index;
     private string content;
-    private PropertyInfo propertyInfo;
+    public PropertyInfo propertyInfo { get; private set; }
     public ExcelRow parent { get; private set; }
     public ExcelCell(ExcelRow p, string con, PropertyInfo info)
     {
