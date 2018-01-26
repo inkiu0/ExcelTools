@@ -54,6 +54,7 @@ namespace ExcelTools
             tabelListView.DataContext = view;
             tabelListView.MouseDoubleClick += FileListView_MouseDoubleClick;
             idListView.MouseDoubleClick += IDListView_MouseDoubleClick;
+            idListView.MouseRightButtonDown += IDListView_RightClick;
             tabelListView.Items.SortDescriptions.Add(new SortDescription("Status", ListSortDirection.Descending));
             tabelListView.Items.IsLiveSorting = true;
             GetRevision();
@@ -140,7 +141,6 @@ namespace ExcelTools
             JudgeMultiFuncBtnState();
             idListView.ItemsSource = null;
             propertyListView.ItemsSource = null;
-            branchListView.ItemsSource = null;
             if (item.Status == SVNHelper.STATE_MODIFIED)
             {
                 //ExcelParser.ParseTemp(item.FilePath);
@@ -158,6 +158,16 @@ namespace ExcelTools
             }
         }
 
+        private void IDListView_RightClick(object sender, MouseButtonEventArgs e)
+        {
+            //TODO:取消此行修改
+            ListView listView = sender as ListView;
+            IDListItem item = listView.SelectedItem as IDListItem;
+            int row = item.Row;
+            _DiffDic[_listItemChoosed.FilePath].RevertModified(row);
+            idListView.ItemsSource = _DiffDic[_listItemChoosed.FilePath].IDListItems;
+        }
+
         private void IDListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             ListView listView = sender as ListView;
@@ -165,7 +175,6 @@ namespace ExcelTools
             Excel excel = GlobalCfg.Instance.GetParsedExcel(_listItemChoosed.FilePath);
             List<PropertyInfo> propertyList = excel.Properties;
             ObservableCollection<PropertyListItem> fieldList = new ObservableCollection<PropertyListItem>();
-            ObservableCollection<BranchListItem> branchList = new ObservableCollection<BranchListItem>();
 
             int trunkCfgIndex = 0;
             int studioCfgIndex = 0;
@@ -206,21 +215,18 @@ namespace ExcelTools
                 fieldList.Add(new PropertyListItem()
                 {
                     PropertyName = propertyList[i].cname,
-                    Context = excel.rows[item.Row - 5].cells[i].GetValue()
-                });
-            }
-            for(int i = 0; i < tables[0].configs[trunkCfgIndex].properties.Count; i++)
-            {
-                branchList.Add(new BranchListItem()
-                {
-                    Trunk = tables[0].configs[trunkCfgIndex].properties[i].value,
-                    Studio = tables[1].configs[studioCfgIndex].properties[i].value,
-                    TF = tables[2].configs[tfCfgIndex].properties[i].value,
-                    Release = tables[3].configs[releaseCfgIndex].properties[i].value
+                    Context = item.State == "deleted" ? null : excel.rows[item.Row - 5].cells[i].GetValue(),
+                    Trunk = i >= tables[0].configs[trunkCfgIndex].properties.Count ?
+                        null : tables[0].configs[trunkCfgIndex].properties[i].value,
+                    Studio = i >= tables[1].configs[trunkCfgIndex].properties.Count ?
+                        null : tables[1].configs[studioCfgIndex].properties[i].value,
+                    TF = i >= tables[2].configs[trunkCfgIndex].properties.Count ?
+                        null : tables[2].configs[tfCfgIndex].properties[i].value,
+                    Release = i >= tables[3].configs[trunkCfgIndex].properties.Count ?
+                        null : tables[3].configs[releaseCfgIndex].properties[i].value
                 });
             }
             propertyListView.ItemsSource = fieldList;
-            branchListView.ItemsSource = branchList;
         }
 
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
@@ -315,6 +321,27 @@ namespace ExcelTools
             //do my stuff before closing
             FileUtil.DeleteHiddenFile(_Folders, _Ext);
             base.OnClosing(e);
+        }
+
+        private void GenTableBtn_Click(object sender, RoutedEventArgs e)
+        {
+            Button genBtn = sender as Button;
+            string aimUrl = "";
+            switch (genBtn.Name)
+            {
+                case "genTableBtn_Release":
+                    aimUrl += GlobalCfg.BranchURLs[3] + GlobalCfg.ClientTablePath;
+                    break;
+                case "genTableBtn_TF":
+                    aimUrl += GlobalCfg.BranchURLs[2] + GlobalCfg.ClientTablePath;
+                    break;
+                case "genTableBtn_Studio":
+                    aimUrl += GlobalCfg.BranchURLs[1] + GlobalCfg.ClientTablePath;
+                    break;
+                case "genTableBtn_Trunk":
+                    aimUrl += GlobalCfg.BranchURLs[0] + GlobalCfg.ClientTablePath;
+                    break;
+            }
         }
     }
 }

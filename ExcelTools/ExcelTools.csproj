@@ -90,7 +90,6 @@
     <Compile Include="Scripts\Lua\lparser.cs" />
     <Compile Include="Scripts\Lua\LuaDLL.cs" />
     <Compile Include="Scripts\Lua\LuaDLLWrapper.cs" />
-    <Compile Include="Scripts\UI\BranchListItem.cs" />
     <Compile Include="Scripts\UI\ExcelFileListItem.cs" />
     <Compile Include="Scripts\UI\FieldListItem.cs" />
     <Compile Include="Scripts\UI\IDListItem.cs" />

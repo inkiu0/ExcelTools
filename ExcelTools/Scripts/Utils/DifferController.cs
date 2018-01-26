@@ -37,7 +37,18 @@ namespace ExcelTools.Scripts.Utils
         private List<int> _modifiedList = new List<int>();
 
 
+        //不执行的修改
         private List<int> _cancelList = new List<int>();
+
+        public void RevertModified(int row)
+        {
+            if (!_cancelList.Contains(row))
+            {
+                _cancelList.Add(row);
+            }
+            CancelChanges(_cancelList);
+            RefreshUIData();
+        }
 
         #region 以下为UI绑定数据及设置
         private ObservableCollection<IDListItem> _idListItems;
