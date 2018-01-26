@@ -152,8 +152,10 @@ namespace Lua
 
         public static table parse(string path)
         {
-            StreamReader sr = new StreamReader(path);
-            return read_table(sr);
+            using (StreamReader sr = new StreamReader(path))
+            {
+                return read_table(sr);
+            }
         }
     }
 }

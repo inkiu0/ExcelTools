@@ -70,11 +70,11 @@ class ExcelParser
     }
 
     //版本库中最新的表格若未生成配置则生成临时配置
-    public static void ParseTemp(string exlPath)
+    public static void ParseTemp(string exlPath, string branch)
     {
         SVNHelper.Update(FileUtil.PathCombine(GlobalCfg.SourcePath, ".."));
         SVNHelper.Update(FileUtil.PathCombine(GlobalCfg.SourcePath, target_client_table_path));
-        instance.MatchExcelFile(exlPath, null, null);
+        instance.MatchExcelFile(exlPath, null, null, branch);
         GenTableImportFile();
     }
 
@@ -92,34 +92,43 @@ class ExcelParser
         WriteTextFile(contents, targetPath);
     }
 
-    private void MatchExcelFile(string path, string relativeDir, string fileNameContainExt)
+    private void MatchExcelFile(string path, string relativeDir, string fileNameContainExt, string aimPath = null)
     {
-        string tmpExlPath = path.Insert(path.LastIndexOf('.'), "_server");
-        string latestExlPath = File.Exists(tmpExlPath) ? tmpExlPath : path;
-        string excelmd5 = ExcelParserFileHelper.GetMD5HashFromFile(latestExlPath);
+        string excelmd5 = ExcelParserFileHelper.GetMD5HashFromFile(path);
         string tarPath = ExcelParserFileHelper.GetTargetLuaPath(path, true);
         string tempPath = ExcelParserFileHelper.GetTempLuaPath(path, true);
 
-        #region 生成一份服务器的配置
-        if (!ExcelParserFileHelper.IsSameFileMD5(tarPath, excelmd5))
-        {
-            Excel excel = Excel.Parse(latestExlPath, true);
-            if (excel != null && excel.success)
-                GenServerVersion(excel, tempPath, excelmd5);
-        }
-        #endregion
+        //#region 生成一份服务器的配置
+        //if (!ExcelParserFileHelper.IsSameFileMD5(tarPath, excelmd5))
+        //{
+        //    Excel excel = Excel.Parse(latestExlPath, true);
+        //    if (excel != null && excel.success)
+        //        GenServerVersion(excel, tempPath, excelmd5);
+        //}
+        //#endregion
         #region 客户端的Excel生成一份客户端的配置
         if (path.IndexOf("serverexcel") < 0)
         {
             tarPath = ExcelParserFileHelper.GetTargetLuaPath(path, false);
-            tempPath = ExcelParserFileHelper.GetTempLuaPath(path, false);
-            if (!ExcelParserFileHelper.IsSameFileMD5(tarPath, excelmd5))
+            if (aimPath == null)
             {
-                Excel excel = Excel.Parse(latestExlPath, false);
-                if (excel != null && excel.success)
-                    GenClientVersion(excel, tempPath, excelmd5);
+                tempPath = ExcelParserFileHelper.GetTempLuaPath(path, false);
             }
-            if(NeedAutoImport(path))
+            else
+            {
+                //这里暂时这么处理
+                tempPath = aimPath;
+            }
+            //if (!ExcelParserFileHelper.IsSameFileMD5(tempPath, excelmd5))
+            //{
+            //    Excel excel = Excel.Parse(latestExlPath, false);
+            //    if (excel != null && excel.success)
+            //        GenClientVersion(excel, tempPath, excelmd5);
+            //}
+            Excel excel = Excel.Parse(path, false);
+            if (excel != null && excel.success)
+                GenClientVersion(excel, tempPath, excelmd5);
+            if (NeedAutoImport(path))
                 _NeedImportClient.Add(Path.GetFileNameWithoutExtension(tempPath));
         }
         if (NeedAutoImport(path))
@@ -170,9 +179,16 @@ class ExcelParser
         string dir = Path.GetDirectoryName(path);
         if (!Directory.Exists(dir))
             Directory.CreateDirectory(dir);
-        using (StreamWriter sw = File.CreateText(path))
+        if (!File.Exists(path))
         {
-            sw.Write(contents);
+            using (StreamWriter sw = File.CreateText(path))
+            {
+                sw.Write(contents);
+            }
+        }
+        else
+        {
+            FileUtil.OverWriteText(path, contents);
         }
     }
     public static DataTable GetExcelTableByOleDB(string path)

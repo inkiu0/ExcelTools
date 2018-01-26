@@ -33,7 +33,7 @@ class FileUtil
         return files;
     }
 
-    public static List<string> CollectFolder(string folder, string ext, Action<string, string, string> match)
+    public static List<string> CollectFolder(string folder, string ext, Action<string, string, string,string> match)
     {
         List<string> files = new List<string>();
         if (Directory.Exists(folder))
@@ -52,7 +52,7 @@ class FileUtil
         return files;
     }
 
-    public static void CollectFile(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "", Boolean collectHidden = false, Action<string, string, string> match = null)
+    public static void CollectFile(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "", Boolean collectHidden = false, Action<string, string, string, string> match = null)
     {
         folder = AppendSlash(folder);
         ppath = AppendSlash(ppath);
@@ -68,7 +68,7 @@ class FileUtil
                     FileAttributes attributes = File.GetAttributes(fpath);
                     if(!( ((attributes & FileAttributes.Hidden) == FileAttributes.Hidden) ^ collectHidden) ){
                         fileList.Add(fpath);
-                        match?.Invoke(fpath, ppath, files[i].Name);
+                        match?.Invoke(fpath, ppath, files[i].Name, null);
                     }
                 }
             }

@@ -241,7 +241,7 @@ namespace ExcelTools
                     {
                         string fileUrl = _URL + "/" + _ExcelFiles[i].FilePath.Substring(_ExcelFiles[i].FilePath.IndexOf("Cehua"));
                         string aimPath = _ExcelFiles[i].FilePath.Insert(_ExcelFiles[i].FilePath.LastIndexOf("."), _TempRename);
-                        SVNHelper.CatFile(fileUrl, aimPath);
+                        SVNHelper.CatFile(fileUrl, aimPath, true);
                     }
                 }
                 else
@@ -319,7 +319,8 @@ namespace ExcelTools
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             //do my stuff before closing
-            FileUtil.DeleteHiddenFile(_Folders, _Ext);
+            FileUtil.DeleteHiddenFile(new List<string> { GlobalCfg.SourcePath + "/.." }, _Ext);
+            FileUtil.DeleteHiddenFile(new List<string> { GlobalCfg.SourcePath + "/.." }, ".txt");
             base.OnClosing(e);
         }
 
@@ -327,21 +328,27 @@ namespace ExcelTools
         {
             Button genBtn = sender as Button;
             string aimUrl = "";
+            string tmpPath = "";
             switch (genBtn.Name)
             {
                 case "genTableBtn_Release":
                     aimUrl += GlobalCfg.BranchURLs[3] + GlobalCfg.ClientTablePath;
+                    tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[3];
                     break;
                 case "genTableBtn_TF":
                     aimUrl += GlobalCfg.BranchURLs[2] + GlobalCfg.ClientTablePath;
+                    tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[2];
                     break;
                 case "genTableBtn_Studio":
                     aimUrl += GlobalCfg.BranchURLs[1] + GlobalCfg.ClientTablePath;
+                    tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[1];
                     break;
                 case "genTableBtn_Trunk":
                     aimUrl += GlobalCfg.BranchURLs[0] + GlobalCfg.ClientTablePath;
+                    tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[0];
                     break;
             }
+            _DiffDic[_listItemChoosed.FilePath].ConfirmChangesAndCommit(tmpPath, aimUrl);
         }
     }
 }

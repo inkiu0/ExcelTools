@@ -16,6 +16,13 @@ namespace ExcelTools.Scripts
             "svn://svn.sg.xindong.com/RO/client-branches/TF",
             "svn://svn.sg.xindong.com/RO/client-branches/Release"
         };
+        static public List<string> TmpTablePaths = new List<string>()
+        {
+            "../TmpTable/Trunk/",
+            "../TmpTable/Studio/",
+            "../TmpTable/TF/",
+            "../TmpTable/Release/"
+        };
         static public string ClientTablePath = "/client-refactory/Develop/Assets/Resources/Script";
         private static GlobalCfg _instance;
 
@@ -58,12 +65,13 @@ namespace ExcelTools.Scripts
         //因为需要显示，四个分支都一起生成处理
         public List<lparser.table> GetlTable(string exlpath, bool reParse = false)
         {
+            //这里之后表格位置修改需要处理一下的，GetTargetLuaPath不好用
             string tableName = Path.GetFileName(ExcelParserFileHelper.GetTargetLuaPath(exlpath,false));
             List<string> urls = Path2URLs(ExcelParserFileHelper.GetTargetLuaPath(exlpath, false));
             List<string> tmpFolders = GenTmpPath(tableName);
             for (int i = 0; i < urls.Count; i++)
             {
-                SVNHelper.CatFile(urls[i], tmpFolders[i]);
+                SVNHelper.CatFile(urls[i], tmpFolders[i], false);
             }
             if (!_lTableDic.ContainsKey(exlpath) || reParse)
             {
@@ -91,16 +99,16 @@ namespace ExcelTools.Scripts
         //生成临时table的路径
         private static List<string> GenTmpPath(string tableName)
         {
-            Directory.CreateDirectory(Path.Combine(SourcePath, "../TmpTable/Trunk/"));
-            Directory.CreateDirectory(Path.Combine(SourcePath, "../TmpTable/Studio/"));
-            Directory.CreateDirectory(Path.Combine(SourcePath, "../TmpTable/TF/"));
-            Directory.CreateDirectory(Path.Combine(SourcePath, "../TmpTable/Release/"));
+            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[0]));
+            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[1]));
+            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[2]));
+            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[3]));
             List<string> tmpFolders = new List<string>
             {
-                Path.Combine(SourcePath, "../TmpTable/Trunk/", tableName),
-                Path.Combine(SourcePath, "../TmpTable/Studio/", tableName),
-                Path.Combine(SourcePath, "../TmpTable/TF/", tableName),
-                Path.Combine(SourcePath, "../TmpTable/Release/", tableName)
+                Path.Combine(SourcePath, TmpTablePaths[0], tableName),
+                Path.Combine(SourcePath, TmpTablePaths[1], tableName),
+                Path.Combine(SourcePath, TmpTablePaths[2], tableName),
+                Path.Combine(SourcePath, TmpTablePaths[3], tableName)
             };
             return tmpFolders;
         }

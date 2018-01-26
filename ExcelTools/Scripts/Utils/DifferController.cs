@@ -8,6 +8,7 @@ using ExcelTools.Scripts.UI;
 using System.ComponentModel;
 using System.Text;
 using System.Windows;
+using Lua;
 
 namespace ExcelTools.Scripts.Utils
 {
@@ -39,6 +40,7 @@ namespace ExcelTools.Scripts.Utils
 
         //不执行的修改
         private List<int> _cancelList = new List<int>();
+        private bool _isCancelChanges = false;
 
         public void RevertModified(int row)
         {
@@ -153,12 +155,24 @@ namespace ExcelTools.Scripts.Utils
             }
         }
 
-        public void ConfirmChangesAndCommit()
+        public void ConfirmChangesAndCommit(string branch, string aimUrl)
         {
             CancelChanges(_cancelList);
-            ModifyTempFile();
-            //TODO:生成并提交
-            //
+            //若不整张表提交，就去修改临时文件，用以提交
+            if (_isCancelChanges)
+            {
+                ModifyTempFile();
+                string ogName = Path.GetFileName(LocalPath);
+                FileUtil.RenameFile(LocalPath, ogName.Insert(ogName.IndexOf("."), "_local"));
+                FileUtil.RenameFile(TempPath, ogName);
+            }
+            string tmpTablePath = branch  + "Table_" + Path.GetFileNameWithoutExtension(LocalPath) + ".txt";
+            ExcelParser.ParseTemp(LocalPath, tmpTablePath);
+            loptimal.optimal(tmpTablePath, tmpTablePath);            
+            //TODO:提交
+            //表格提交
+            //SVNHelper.Commit(LocalPath);
+            //配置提交
             //
         }
 
@@ -174,7 +188,8 @@ namespace ExcelTools.Scripts.Utils
                     _deletedList.Remove(rowsExclusion[i]);
                     int index = _addedList.IndexOf(rowsExclusion[i]);
                     _addedList.RemoveAt(index);
-                    _addedToList.RemoveAt(index);                    
+                    _addedToList.RemoveAt(index);
+                    _isCancelChanges = true;
                 }
                 else if (_deletedList.IndexOf(rowsExclusion[i]) != -1)
                 {
@@ -186,6 +201,7 @@ namespace ExcelTools.Scripts.Utils
                         }
                     }
                     _deletedList.RemoveAt(_deletedList.IndexOf(rowsExclusion[i]));
+                    _isCancelChanges = true;
                 }
                 else if (_addedList.IndexOf(rowsExclusion[i]) != -1)
                 {
@@ -196,6 +212,7 @@ namespace ExcelTools.Scripts.Utils
                     }
                     _addedList.RemoveAt(index);
                     _addedToList.RemoveAt(index);
+                    _isCancelChanges = true; ;
                 }
             }
         }

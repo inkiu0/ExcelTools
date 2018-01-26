@@ -91,11 +91,14 @@ public class SVNHelper
     /// <summary>
     /// 获取服务器上指定文件的最新拷贝
     /// </summary>
-    public static void CatFile(string fileUrl, string aimPath)
+    public static void CatFile(string fileUrl, string aimPath, bool setHidden)
     {
         string arguments = "/C svn cat " + fileUrl + " > " + aimPath;
         CommandHelper.ExcuteCommand("cmd", arguments);
-        FileUtil.SetHidden(aimPath, true);
+        if (setHidden)
+        {
+            FileUtil.SetHidden(aimPath, true);
+        }
     }
 
     /// <summary>
