@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Windows.Input;
 using ExcelTools.Scripts.UI;
 using Lua;
+using ExcelTools.Scripts.Lua;
 
 namespace ExcelTools
 {
@@ -45,7 +46,7 @@ namespace ExcelTools
         const string _FolderServerExvel = "/serverexcel";
         const string _FolderSubConfigs = "/SubConfigs";
         const string _Ext = ".xlsx";
-        const string _TempRename = "_server";
+        const string _TempRename = "_tmp";
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -126,13 +127,10 @@ namespace ExcelTools
             ChooseSourcePath();
         }
 
-        private void FileListView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void FileListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             ListView listView = sender as ListView;
             ExcelFileListItem item = listView.SelectedItem as ExcelFileListItem;
-            //Excel excel = Excel.Parse(item.FilePath, false);
-            //string tmp = excel.ToString();
-            //ExcelParser.ParseAll();
             _listItemChoosed = item;
             if (item == null)
             {
@@ -143,8 +141,7 @@ namespace ExcelTools
             propertyListView.ItemsSource = null;
             if (item.Status == SVNHelper.STATE_MODIFIED)
             {
-                //ExcelParser.ParseTemp(item.FilePath);
-                string tmpExlPath = item.FilePath.Remove(item.FilePath.LastIndexOf('/') + 1) + Path.GetFileNameWithoutExtension(item.FilePath) + _TempRename + _Ext;
+                string tmpExlPath = item.FilePath.Insert(item.FilePath.LastIndexOf('.'),_TempRename);
                 _DiffDic[item.FilePath] = new DifferController(item.FilePath, tmpExlPath);
                 _DiffDic[item.FilePath].Differ();
                 if (_DiffDic[item.FilePath].IDListItems.Count > 0)
