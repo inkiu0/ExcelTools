@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Windows;
 using Lua;
+using static Lua.lparser;
 
 namespace ExcelTools.Scripts.Utils
 {
@@ -306,6 +307,80 @@ namespace ExcelTools.Scripts.Utils
                 tmpFs.Close();
             }
             FileUtil.SetHidden(_tempPath, true);
+        }
+
+        struct tablerowdiff
+        {
+            public HashSet<string> addedcells;
+            public HashSet<string> deletedcells;
+            public HashSet<string> modifiedcells;
+        }
+
+        struct tablediff
+        {
+            public HashSet<string> addedrows;
+            public HashSet<string> deletedrows;
+            public Dictionary<string, tablerowdiff> modifiedrows;
+        }
+
+        private static void AddModifiedRow(string rowkey, string propertyname, int type, ref tablediff tdiff)
+        {
+            if (!tdiff.modifiedrows.ContainsKey(rowkey))
+                tdiff.modifiedrows.Add(rowkey, new tablerowdiff
+                {
+                    addedcells = new HashSet<string>(),
+                    deletedcells = new HashSet<string>(),
+                    modifiedcells = new HashSet<string>()
+                });
+            switch(type)
+            {
+                case 0://deleted
+                    tdiff.modifiedrows[rowkey].deletedcells.Add(propertyname);
+                    break;
+                case 1://added
+                    tdiff.modifiedrows[rowkey].addedcells.Add(propertyname);
+                    break;
+                case 2://modified
+                    tdiff.modifiedrows[rowkey].modifiedcells.Add(propertyname);
+                    break;
+            }
+        }
+
+        private static void CompareTablerow(config left, config right, ref tablediff tdiff)
+        {
+            for (int i = 0; i < right.properties.Count; i++)
+            {
+                if (!left.propertiesDic.ContainsKey(right.properties[i].name))
+                    AddModifiedRow(right.key, right.properties[i].name, 0, ref tdiff);
+                else if (!left.propertiesDic[right.properties[i].name].value.Equals(right.properties[i].value))
+                    AddModifiedRow(right.key, right.properties[i].name, 2, ref tdiff);
+                else
+                    left.propertiesDic.Remove(right.properties[i].name);
+            }
+            foreach(var item in left.propertiesDic)
+                AddModifiedRow(item.Key, item.Value.name, 1, ref tdiff);
+        }
+
+        public static void CompareTable(table left, table right)
+        {
+            tablediff tdiff = new tablediff
+            {
+                addedrows = new HashSet<string>(),
+                deletedrows = new HashSet<string>(),
+                modifiedrows = new Dictionary<string, tablerowdiff>()
+            };
+            for (int i = 0; i < right.configs.Count; i++)
+            {
+                if (left.configsDic.ContainsKey(right.configs[i].key))
+                {
+                    CompareTablerow(left.configsDic[right.configs[i].key], right.configs[i], ref tdiff);
+                    left.configsDic.Remove(right.configs[i].key);
+                }
+                else
+                    tdiff.addedrows.Add(right.configs[i].key);
+            }
+            foreach (var key in left.configsDic.Keys)
+                tdiff.deletedrows.Add(key);
         }
     }
 }

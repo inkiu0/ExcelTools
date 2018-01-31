@@ -18,6 +18,7 @@ namespace Lua
             public string md5;
             public string name;
             public List<config> configs;
+            public Dictionary<string, config> configsDic;
 
             public string GenString(Func<string> callback)
             {
@@ -43,6 +44,7 @@ namespace Lua
         {
             public string key;
             public List<property> properties;
+            public Dictionary<string, property> propertiesDic;
 
             public string GenString()
             {
@@ -94,13 +96,16 @@ namespace Lua
             config config = new config
             {
                 key = llex_lite.buff2str(),/* read key */
-                properties = new List<property>()
+                properties = new List<property>(),
+                propertiesDic = new Dictionary<string, property>()
             };
             llex_lite.llex(sr, true);/* skip '{' */
             string k, v = null;
             while (!sr.EndOfStream && llex_lite.llex(sr) != '}')
             {
-                config.properties.Add(read_property(sr));
+                property p = read_property(sr);
+                config.properties.Add(p);
+                config.propertiesDic.Add(p.name, p);
             }
             return config;
         }
@@ -113,12 +118,15 @@ namespace Lua
             {
                 md5 = md5Str,
                 name = llex_lite.buff2str(),
-                configs = new List<config>()
+                configs = new List<config>(),
+                configsDic = new Dictionary<string, config>()
             };
             llex_lite.llex(sr, true);/* skip '{' */
             while(!sr.EndOfStream && llex_lite.llex(sr) != '}')
             {
-                t.configs.Add(read_config(sr));
+                config conf = read_config(sr);
+                t.configs.Add(conf);
+                t.configsDic.Add(conf.key, conf);
             }
             return t;
         }
