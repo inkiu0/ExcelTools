@@ -50,12 +50,12 @@ namespace ExcelTools
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             LoadConfig();
-            tabelListView.DataContext = view;
-            tabelListView.MouseDoubleClick += FileListView_MouseDoubleClick;
-            idListView.MouseDoubleClick += IDListView_MouseDoubleClick;
+            tableListView.DataContext = view;
+            tableListView.SelectionChanged += FileListView_SelectionChange;
+            idListView.SelectionChanged += IDListView_SelectChange;
             idListView.MouseRightButtonDown += IDListView_RightClick;
-            tabelListView.Items.SortDescriptions.Add(new SortDescription("Status", ListSortDirection.Descending));
-            tabelListView.Items.IsLiveSorting = true;
+            tableListView.Items.SortDescriptions.Add(new SortDescription("Status", ListSortDirection.Descending));
+            tableListView.Items.IsLiveSorting = true;
             GetRevision();
         }
 
@@ -134,7 +134,7 @@ namespace ExcelTools
             LoadConfig(true);
         }
 
-        private void FileListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void FileListView_SelectionChange(object sender, SelectionChangedEventArgs e)
         {
             ListView listView = sender as ListView;
             ExcelFileListItem item = listView.SelectedItem as ExcelFileListItem;
@@ -172,10 +172,14 @@ namespace ExcelTools
             idListView.ItemsSource = _DiffDic[_listItemChoosed.FilePath].IDListItems;
         }
 
-        private void IDListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void IDListView_SelectChange(object sender, SelectionChangedEventArgs e)
         {
             ListView listView = sender as ListView;
             IDListItem item = listView.SelectedItem as IDListItem;
+            if(item == null)
+            {
+                return;
+            }
             Excel excel = GlobalCfg.Instance.GetParsedExcel(_listItemChoosed.FilePath);
             List<PropertyInfo> propertyList = excel.Properties;
             ObservableCollection<PropertyListItem> fieldList = new ObservableCollection<PropertyListItem>();
@@ -283,7 +287,7 @@ namespace ExcelTools
                     CheckStateBtn_Click(null, null);
                     break;
                 case STATE_EDIT:
-                    //FileUtil.OpenFile(_listItemChoosed.FilePath);
+                    FileUtil.OpenFile(_listItemChoosed.FilePath);
                     break;
                 default:
                     break;
@@ -299,24 +303,24 @@ namespace ExcelTools
 
         private void JudgeMultiFuncBtnState()
         {
-            multiFuncBtn.Visibility = Visibility.Visible;
+            multiFunctionBtn.Visibility = Visibility.Visible;
             //需要Update
             if (_localRev != _serverRev)
             {
-                multiFuncBtn.Content = STATE_UPDATE;
+                multiFunctionBtn.Content = STATE_UPDATE;
             }
             //有modified
             else if (_listItemChoosed != null && _listItemChoosed.Status == SVNHelper.STATE_MODIFIED)
             {
-                multiFuncBtn.Content = STATE_REVERT;
+                multiFunctionBtn.Content = STATE_REVERT;
             }
             else if (_listItemChoosed != null && _listItemChoosed.Status == "/")
             {
-                multiFuncBtn.Content = STATE_EDIT;
+                multiFunctionBtn.Content = STATE_EDIT;
             }
             else
             {
-                multiFuncBtn.Visibility = Visibility.Hidden;
+                multiFunctionBtn.Visibility = Visibility.Hidden;
             }
         }
 

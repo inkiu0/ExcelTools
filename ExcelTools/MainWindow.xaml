@@ -3,77 +3,109 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:custom="clr-namespace:ExcelTools.Scripts.UI"
         mc:Ignorable="d"
-        Title="配置表工具" Height="600" Width="1000" Loaded="Window_Loaded">
-    <Grid Margin="-1,0,1,0">
-        <ListView Margin="10,80,787,10" Name="tabelListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="表格" DisplayMemberBinding="{Binding Name}" Width="190"/>
-                </GridView>
-            </ListView.View>
-            <ListView.ItemContainerStyle>
-                <Style TargetType="{x:Type ListViewItem}">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Path=Status}" Value="modified">
-                            <Setter Property="Foreground" Value="Blue"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Path=Status}" Value="deleted">
-                            <Setter Property="Foreground" Value="Red"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Path=Status}" Value="added">
-                            <Setter Property="Foreground" Value="Green"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Path=Status}" Value="conflict">
-                            <Setter Property="Foreground" Value="DarkOrange"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ListView.ItemContainerStyle>
-        </ListView>
-        <ListView Margin="273,80,52,10" x:Name="propertyListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="字段名" DisplayMemberBinding="{Binding PropertyName}" Width="100"/>
-                    <GridViewColumn Header="本地内容" DisplayMemberBinding="{Binding Context}" Width="165"/>
-                    <GridViewColumn Header="Trunk" DisplayMemberBinding="{Binding Trunk}" Width="100"/>
-                    <GridViewColumn Header="Studio" DisplayMemberBinding="{Binding Studio}" Width="100"/>
-                    <GridViewColumn Header="TF" DisplayMemberBinding="{Binding TF}" Width="100"/>
-                    <GridViewColumn Header="Release" DisplayMemberBinding="{Binding Release}" Width="100"/>
-                </GridView>
-            </ListView.View>
-        </ListView>
-        <ListView Margin="210,80,724,10" x:Name="idListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden" ItemsSource="{Binding}">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ID}" Width="53" />
-                </GridView>
-            </ListView.View>
-            <ListView.ItemContainerStyle>
-                <Style TargetType="{x:Type ListViewItem}">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Path=State}" Value="modified">
-                            <Setter Property="Foreground" Value="Blue"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Path=State}" Value="deleted">
-                            <Setter Property="Foreground" Value="Red"/>
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Path=State}" Value="added">
-                            <Setter Property="Foreground" Value="Green"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ListView.ItemContainerStyle>
-        </ListView>
-        <Button Content="检查状态" Click ="CheckStateBtn_Click" Name ="checkStateBtn" Margin="115,0,777,496" VerticalAlignment="Bottom" Height="30"/>
-        <Button Content="功能" Click ="MultiFuncBtn_Click" Name="multiFuncBtn" Margin="423,0,469,496" VerticalAlignment="Bottom" Height="30"/>
-        <Button Content="更改表格路径" Click ="ChangeSourcePath_Click" Name="changePathBtn" Margin="10,0,882,496" VerticalAlignment="Bottom" Height="30"/>
+        Title="配置表工具" Height="600" Width="980" Loaded="Window_Loaded">
+    <Grid>
+        <DockPanel>
+            <Menu DockPanel.Dock="Top">
+                <MenuItem Header="File">
+                    <MenuItem Name="menuOpen" Header="打开表格所在目录" Click="ChangeSourcePath_Click"></MenuItem>
+                </MenuItem>
+                <MenuItem Header="View"></MenuItem>
+                <MenuItem Header="About"></MenuItem>
+            </Menu>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
+                <Button Content="检查状态" Click ="CheckStateBtn_Click" x:Name ="checkStateBtn" Height="20" Width="100"/>
+                <Button Content="功能" Click ="MultiFuncBtn_Click" Name="multiFunctionBtn" Height="20" Width="100"/>
+            </StackPanel>
+            <avalonDock:DockingManager x:Name="dockingManager" DockPanel.Dock="Top">
+                <avalonDock:LayoutRoot>
+                    <avalonDock:LayoutPanel Orientation="Horizontal">
+                        <avalonDock:LayoutAnchorablePane DockWidth="200" DockMinWidth="60">
+                            <avalonDock:LayoutAnchorable Title="表格浏览" CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False">
+                                <ListView Name="tableListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Header="表格" DisplayMemberBinding="{Binding Name}" Width="190"/>
+                                        </GridView>
+                                    </ListView.View>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type ListViewItem}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=Status}" Value="modified">
+                                                    <Setter Property="Foreground" Value="Blue"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Path=Status}" Value="deleted">
+                                                    <Setter Property="Foreground" Value="Red"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Path=Status}" Value="added">
+                                                    <Setter Property="Foreground" Value="Green"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Path=Status}" Value="conflict">
+                                                    <Setter Property="Foreground" Value="DarkOrange"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                </ListView>
+                            </avalonDock:LayoutAnchorable>
+                        </avalonDock:LayoutAnchorablePane>
 
-        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Release" Margin="851,0,61,494" VerticalAlignment="Bottom" Height="30"/>
-        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_TF" Margin="752,0,160,494" VerticalAlignment="Bottom" Height="30"/>
-        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Studio" Margin="652,0,260,494" VerticalAlignment="Bottom" Height="30"/>
-        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Trunk" Margin="552,0,360,494" VerticalAlignment="Bottom" Height="30"/>
-
+                        <avalonDock:LayoutAnchorablePane DockWidth="85" DockMinWidth="60">
+                            <avalonDock:LayoutAnchorable Title="ID项" CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False" >
+                                <ListView x:Name="idListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
+                                    <ListView.View>
+                                        <GridView>
+                                            <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ID}" Width="53" />
+                                        </GridView>
+                                    </ListView.View>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type ListViewItem}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Path=State}" Value="modified">
+                                                    <Setter Property="Foreground" Value="Blue"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Path=State}" Value="deleted">
+                                                    <Setter Property="Foreground" Value="Red"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Path=State}" Value="added">
+                                                    <Setter Property="Foreground" Value="Green"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                </ListView>
+                            </avalonDock:LayoutAnchorable>
+                        </avalonDock:LayoutAnchorablePane>
+                        <avalonDock:LayoutDocumentPane DockWidth="675" DockMinWidth="60">
+                            <avalonDock:LayoutAnchorable CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Release" Height="20" Width="100" Margin="268,0,0,0"/>
+                                        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_TF" Height="20" Width="100"/>
+                                        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Studio" Height="20" Width="100"/>
+                                        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Trunk" Height="20" Width="100"/>
+                                    </StackPanel>
+                                    <ListView x:Name="propertyListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
+                                        <ListView.View>
+                                            <GridView>
+                                                <GridViewColumn Header="字段名" DisplayMemberBinding="{Binding PropertyName}" Width="100"/>
+                                                <GridViewColumn Header="本地内容" DisplayMemberBinding="{Binding Context}" Width="165"/>
+                                                <GridViewColumn Header="Trunk" DisplayMemberBinding="{Binding Trunk}" Width="100"/>
+                                                <GridViewColumn Header="Studio" DisplayMemberBinding="{Binding Studio}" Width="100"/>
+                                                <GridViewColumn Header="TF" DisplayMemberBinding="{Binding TF}" Width="100"/>
+                                                <GridViewColumn Header="Release" DisplayMemberBinding="{Binding Release}" Width="100"/>
+                                            </GridView>
+                                        </ListView.View>
+                                    </ListView>
+                                </StackPanel>
+                            </avalonDock:LayoutAnchorable>
+                        </avalonDock:LayoutDocumentPane>
+                    </avalonDock:LayoutPanel>
+                </avalonDock:LayoutRoot>
+            </avalonDock:DockingManager>
+        </DockPanel>
     </Grid>
 </Window>
