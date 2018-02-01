@@ -86,7 +86,7 @@ namespace ExcelTools
                 });
             }
             view.Source = _ExcelFiles;
-            CheckStateBtn_Click(null, null);
+            //CheckStateBtn_Click(null, null);
         }
 
         private void SetSourcePath(bool force)
@@ -121,7 +121,7 @@ namespace ExcelTools
             }
             else
             {
-                string message = path + "不是Table的路径\n请选择包含Table的路径！";
+                string message = path + "不是Cehua/Table路径\n请选择包含Table的路径！";
                 string caption = "Error";
                 System.Windows.Forms.MessageBoxButtons buttons = System.Windows.Forms.MessageBoxButtons.OK;
                 System.Windows.Forms.MessageBox.Show(message, caption, buttons);
