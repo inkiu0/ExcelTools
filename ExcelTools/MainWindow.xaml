@@ -34,6 +34,7 @@
                                     <ListView.ItemContainerStyle>
                                         <Style TargetType="{x:Type ListViewItem}">
                                             <Style.Triggers>
+                                                <!--状态的判断-->
                                                 <DataTrigger Binding="{Binding Path=Status}" Value="modified">
                                                     <Setter Property="Foreground" Value="Blue"/>
                                                 </DataTrigger>
@@ -43,8 +44,9 @@
                                                 <DataTrigger Binding="{Binding Path=Status}" Value="added">
                                                     <Setter Property="Foreground" Value="Green"/>
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Path=Status}" Value="conflict">
-                                                    <Setter Property="Foreground" Value="DarkOrange"/>
+                                                <!--锁定状态的判断-->
+                                                <DataTrigger Binding="{Binding Path=LockByMe}" Value="locked">
+                                                    <Setter Property="Background" Value="DarkOrange"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

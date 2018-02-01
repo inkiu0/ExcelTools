@@ -105,36 +105,38 @@ public class SVNHelper
     /// 可获得目标文件的状态
     /// </summary>
     /// <param name="args">需包含目标文件的路径</param>
-    public static Dictionary<string, string> Status(params string[] args)
+    public static Dictionary<string, string[]> Status(params string[] args)
     {
         string arguments = "status " + string.Join(" ", args);
         string output = CommandHelper.ExcuteCommand("svn", arguments, true);
         string[] statusArray = output.Split('\n', '\r');
-        Dictionary<string, string> statusDic = new Dictionary<string, string>();
+        Dictionary<string, string[]> statusDic = new Dictionary<string, string[]>();
         foreach (string str in statusArray)
         {
             if (str != "")
             {
                 string[] tmp = str.Split(' ');
-                string[] state = new string[3] { "/", "", "" };
-                state[0] = tmp[0];
-                state[2] = tmp[tmp.Length -1];
+                //info数组元素：[0]状态[1]锁定状态[2]文件路径
+                string[] info = new string[3] { "/", "", "" };
+                info[0] = tmp[0];
+                info[2] = tmp[tmp.Length -1];
                 for (int i = 1; i< tmp.Length -1;i++)
                 {
                     if(tmp[i] != "")
                     {
-                        state[1] = tmp[i];
+                        info[1] = tmp[i];
                         break;
                     }
                 }
-                string path = state[2].Replace(@"\","/");
+                string path = info[2].Replace(@"\","/");
                 string key;
-                string val = IdentiToState(state[0]);
+                string state = IdentiToState(info[0]);
+                string islockbyMe = IdentiToState(info[1]);
                 //if (state[1] != "")
                 //{
                 //    val = IdentiToState(state[1]);
                 //}
-                if (state[0] != "")
+                if (info[0] != "" || info[1] != "")
                 {
                     if (Directory.Exists(path))
                     {
@@ -144,7 +146,7 @@ public class SVNHelper
                             key = files[i];
                             if (!statusDic.ContainsKey(key))
                             {
-                                statusDic.Add(key, val);
+                                statusDic.Add(key, new string[2] { state, islockbyMe });
                             }
                         }
                     }
@@ -153,7 +155,7 @@ public class SVNHelper
                         key = path;
                         if (!statusDic.ContainsKey(key))
                         {
-                            statusDic.Add(key, val);
+                            statusDic.Add(key, new string[2] { state, islockbyMe });
                         }
                     }
                 }
@@ -211,7 +213,7 @@ public class SVNHelper
             case "K":
                 return STATE_LOCKED;
             default:
-                return null;
+                return identifier;
         }
     }
 

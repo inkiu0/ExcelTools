@@ -81,12 +81,13 @@ namespace ExcelTools
                 {
                     Name = Path.GetFileNameWithoutExtension(files[i]),
                     Status = "/",
+                    LockByMe = "",
                     ClientServer = "C/S",
                     FilePath = files[i]
                 });
             }
             view.Source = _ExcelFiles;
-            CheckStateBtn_Click(null, null);
+            //CheckStateBtn_Click(null, null);
         }
 
         private void SetSourcePath(bool force)
@@ -121,7 +122,7 @@ namespace ExcelTools
             }
             else
             {
-                string message = path + "不是Table的路径\n请选择包含Table的路径！";
+                string message = path + "不是Cehua/Table路径\n请选择包含Table的路径！";
                 string caption = "Error";
                 System.Windows.Forms.MessageBoxButtons buttons = System.Windows.Forms.MessageBoxButtons.OK;
                 System.Windows.Forms.MessageBox.Show(message, caption, buttons);
@@ -239,12 +240,13 @@ namespace ExcelTools
 
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
         {
-            Dictionary<string, string> statusDic = SVNHelper.Status(_Folders[0], _Folders[1]);
+            Dictionary<string, string[]> statusDic = SVNHelper.Status(_Folders[0], _Folders[1]);
             for(int i = 0; i < _ExcelFiles.Count; i++)
             {
                 if (statusDic.ContainsKey(_ExcelFiles[i].FilePath))
                 {
-                    _ExcelFiles[i].Status = statusDic[_ExcelFiles[i].FilePath];
+                    _ExcelFiles[i].Status = statusDic[_ExcelFiles[i].FilePath][0];
+                    _ExcelFiles[i].LockByMe = statusDic[_ExcelFiles[i].FilePath][1];
                     if(_ExcelFiles[i].Status == SVNHelper.STATE_MODIFIED)
                     {
                         string fileUrl = _URL + "/" + _ExcelFiles[i].FilePath.Substring(_ExcelFiles[i].FilePath.IndexOf("Cehua"));
@@ -257,15 +259,16 @@ namespace ExcelTools
                     _ExcelFiles[i].Status = "/";
                 }
             }
-            foreach (KeyValuePair<string, string> kv in statusDic)
+            foreach (KeyValuePair<string, string[]> kv in statusDic)
             {
                 //插入deleted文件
-                if (kv.Value == SVNHelper.STATE_DELETED)
+                if (kv.Value[0] == SVNHelper.STATE_DELETED)
                 {
                     _ExcelFiles.Add(new ExcelFileListItem()
                     {
                         Name = Path.GetFileNameWithoutExtension(kv.Key),
-                        Status = kv.Value,
+                        Status = kv.Value[0],
+                        LockByMe = kv.Value[1],
                         ClientServer = "C/S",
                         FilePath = kv.Key
                     });
