@@ -11,7 +11,6 @@ using System.ComponentModel;
 using System.Windows.Input;
 using ExcelTools.Scripts.UI;
 using Lua;
-using ExcelTools.Scripts.Lua;
 
 namespace ExcelTools
 {
@@ -51,7 +50,6 @@ namespace ExcelTools
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             LoadConfig();
-            Refresh();
             tabelListView.DataContext = view;
             tabelListView.MouseDoubleClick += FileListView_MouseDoubleClick;
             idListView.MouseDoubleClick += IDListView_MouseDoubleClick;
@@ -61,7 +59,17 @@ namespace ExcelTools
             GetRevision();
         }
 
-        private void Refresh()
+        //1. 加载配置
+        //1.1 设置源路径
+        //1.2 加载所有文件
+        #region 加载配置
+        private void LoadConfig(bool force = false)
+        {
+            SetSourcePath(force);
+            LoadFiles();
+        }
+
+        private void LoadFiles()
         {
             _Folders[0] = GlobalCfg.SourcePath + _FolderServerExvel;
             _Folders[1] = GlobalCfg.SourcePath + _FolderSubConfigs;
@@ -81,9 +89,9 @@ namespace ExcelTools
             CheckStateBtn_Click(null, null);
         }
 
-        private void LoadConfig()
+        private void SetSourcePath(bool force)
         {
-            if (!File.Exists(_ConfigPath))
+            if (force || !File.Exists(_ConfigPath))
             {
                 ChooseSourcePath();
             }
@@ -98,7 +106,7 @@ namespace ExcelTools
         {
             System.Windows.Forms.FolderBrowserDialog folderBrowser = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description = "选择Table位置：",
+                Description = "选择Cehua/Table位置：",
                 ShowNewFolderButton = false,
             };
             folderBrowser.ShowDialog();
@@ -110,8 +118,6 @@ namespace ExcelTools
                     cfgSt.WriteLine(path);
                     cfgSt.Close();
                 }
-                LoadConfig();
-                Refresh();
             }
             else
             {
@@ -121,10 +127,11 @@ namespace ExcelTools
                 System.Windows.Forms.MessageBox.Show(message, caption, buttons);
             }
         }
+        #endregion
 
         private void ChangeSourcePath_Click(object sender, RoutedEventArgs e)
         {
-            ChooseSourcePath();
+            LoadConfig(true);
         }
 
         private void FileListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
