@@ -6,7 +6,7 @@
         xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:custom="clr-namespace:ExcelTools.Scripts.UI"
         mc:Ignorable="d"
-        Title="配置表工具" Height="600" Width="980" Loaded="Window_Loaded">
+        Title="配置表工具" Height="600" Width="1080" Loaded="Window_Loaded">
     <Grid>
         <DockPanel>
             <Menu DockPanel.Dock="Top">
