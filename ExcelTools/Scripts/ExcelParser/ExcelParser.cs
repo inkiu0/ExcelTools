@@ -73,7 +73,10 @@ class ExcelParser
     {
         Excel excel = GlobalCfg.Instance.GetParsedExcel(xlsxPath);
         string fname = excel.tableName + ".txt";
-        WriteTextFile(excel.ToString(), Path.Combine(GlobalCfg.SourcePath, GlobalCfg.LocalTmpTablePath, fname));
+        string md5 = ExcelParserFileHelper.GetMD5HashFromFile(xlsxPath);
+        string contents = "--md5:" + md5 + "\n";
+        contents += excel.ToString();
+        WriteTextFile(contents, Path.Combine(GlobalCfg.SourcePath, GlobalCfg.LocalTmpTablePath, fname));
     }
 
     //版本库中最新的表格若未生成配置则生成临时配置
