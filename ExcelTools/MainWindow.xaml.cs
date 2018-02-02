@@ -177,7 +177,7 @@ namespace ExcelTools
                 ename = propertyList[i].ename;
                 fieldList.Add(new PropertyListItem()
                 {
-                    PropertyName = propertyList[i].cname,
+                    PropertyName = propertyList[i].cname + "（" + propertyList[i].ename + "）",
                     Context = configs[0] != null && configs[0].propertiesDic.ContainsKey(ename) ? configs[0].propertiesDic[ename].value : null,
                     Trunk = configs[1] != null && configs[1].propertiesDic.ContainsKey(ename) ? configs[1].propertiesDic[ename].value : null,
                     Studio = configs[2] != null && configs[2].propertiesDic.ContainsKey(ename) ? configs[2].propertiesDic[ename].value : null,
