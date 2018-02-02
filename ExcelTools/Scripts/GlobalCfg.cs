@@ -30,6 +30,8 @@ namespace ExcelTools.Scripts
             "../TmpTable/Release/"
         };
         static public string ClientTablePath = "/client-refactory/Develop/Assets/Resources/Script";
+
+        static private string _Local_Table_Ext = ".txt";
         private static GlobalCfg _instance;
 
         public static GlobalCfg Instance
@@ -81,7 +83,7 @@ namespace ExcelTools.Scripts
             List<string> branchs = GenTmpPath(tablename);
             for (int i = 0; i < branchs.Count; i++)
             {
-                if (File.Exists(lltpath))
+                if (File.Exists(branchs[i]))
                     ts.Add(lparser.parse(branchs[i]));
                 else
                     ts.Add(null);
@@ -98,7 +100,7 @@ namespace ExcelTools.Scripts
             List<string> status = new List<string>();
             for (int i = 1; i < BranchURLs.Count; i++)
             {
-                if (currentTablediffs.Count > i || currentTablediffs[i] != null)
+                if (currentTablediffs.Count > i && currentTablediffs[i] != null)
                 {
                     if (currentTablediffs[i].addedrows.Contains(rowid))
                         status.Add(DifferController.STATUS_ADDED);
@@ -120,22 +122,25 @@ namespace ExcelTools.Scripts
             Dictionary<string, IDListItem> tmpDic = new Dictionary<string, IDListItem>();
             for (int i = 0; i < currentTablediffs.Count; i++)
             {
-                foreach (var id in currentTablediffs[i].deletedrows)
+                if (currentTablediffs[i] != null)
                 {
-                    if (!tmpDic.ContainsKey(id))
+                    foreach (var id in currentTablediffs[i].deletedrows)
                     {
-                        tmpDic.Add(id, new IDListItem
+                        if (!tmpDic.ContainsKey(id))
                         {
-                            ID = id,
-                            Row = -1,
-                            States = new List<string>(currentTablediffs.Count)
-                        });
-                        for (int k = 0; k < tmpDic[id].States.Count; k++)
-                        {
-                            tmpDic[id].States[k] = DifferController.STATUS_DELETED;
+                            tmpDic.Add(id, new IDListItem
+                            {
+                                ID = id,
+                                Row = -1,
+                                States = new List<string>(currentTablediffs.Count)
+                            });
+                            for (int k = 0; k < tmpDic[id].States.Count; k++)
+                            {
+                                tmpDic[id].States[k] = DifferController.STATUS_DELETED;
+                            }
                         }
+                        tmpDic[id].States[i] = DifferController.STATUS_ADDED;
                     }
-                    tmpDic[id].States[i] = DifferController.STATUS_ADDED;
                 }
             }
             return tmpDic;
@@ -211,10 +216,10 @@ namespace ExcelTools.Scripts
             Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[3]));
             List<string> tmpFolders = new List<string>
             {
-                Path.Combine(SourcePath, TmpTablePaths[0], tableName),
-                Path.Combine(SourcePath, TmpTablePaths[1], tableName),
-                Path.Combine(SourcePath, TmpTablePaths[2], tableName),
-                Path.Combine(SourcePath, TmpTablePaths[3], tableName)
+                Path.Combine(SourcePath, TmpTablePaths[0], tableName) + _Local_Table_Ext,
+                Path.Combine(SourcePath, TmpTablePaths[1], tableName) + _Local_Table_Ext,
+                Path.Combine(SourcePath, TmpTablePaths[2], tableName) + _Local_Table_Ext,
+                Path.Combine(SourcePath, TmpTablePaths[3], tableName) + _Local_Table_Ext
             };
             return tmpFolders;
         }

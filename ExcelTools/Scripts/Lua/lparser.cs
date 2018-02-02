@@ -38,6 +38,34 @@ namespace Lua
                 sb.Append("return " + name);
                 return sb.ToString();
             }
+
+            public void RemoveConfig(string key)
+            {
+                if (configsDic.ContainsKey(key))
+                {
+                    configs.Remove(configsDic[key]);
+                    configsDic.Remove(key);
+                }
+            }
+
+            public void AddConfig(config cfg)
+            {
+                if (!configsDic.ContainsKey(cfg.key))
+                {
+                    configsDic[cfg.key] = cfg;
+                    configs.Add(cfg);
+                }
+            }
+
+            public void ModifyConfig(config cfg)
+            {
+                if (configsDic.ContainsKey(cfg.key))
+                {
+                    int index = configs.IndexOf(configsDic[cfg.key]);
+                    configs[index] = cfg;
+                    configsDic[cfg.key] = cfg;
+                }
+            }
         }
 
         public class config

@@ -84,7 +84,7 @@ class ExcelParser
     {
         SVNHelper.Update(FileUtil.PathCombine(GlobalCfg.SourcePath, ".."));
         SVNHelper.Update(FileUtil.PathCombine(GlobalCfg.SourcePath, target_client_table_path));
-        instance.MatchExcelFile(exlPath, null, null, branch);
+        instance.MatchExcelFile(exlPath, null, null);
         GenTableImportFile();
     }
 
@@ -102,7 +102,7 @@ class ExcelParser
         WriteTextFile(contents, targetPath);
     }
 
-    private void MatchExcelFile(string path, string relativeDir, string fileNameContainExt, string aimPath = null)
+    private void MatchExcelFile(string path, string relativeDir, string fileNameContainExt)
     {
         string excelmd5 = ExcelParserFileHelper.GetMD5HashFromFile(path);
         string tarPath = ExcelParserFileHelper.GetTargetLuaPath(path, true);
@@ -119,16 +119,16 @@ class ExcelParser
         #region 客户端的Excel生成一份客户端的配置
         if (path.IndexOf("serverexcel") < 0)
         {
-            tarPath = ExcelParserFileHelper.GetTargetLuaPath(path, false);
-            if (aimPath == null)
-            {
-                tempPath = ExcelParserFileHelper.GetTempLuaPath(path, false);
-            }
-            else
-            {
-                //这里暂时这么处理
-                tempPath = aimPath;
-            }
+            //tarPath = ExcelParserFileHelper.GetTargetLuaPath(path, false);
+            //if (aimPath == null)
+            //{
+            //    tempPath = ExcelParserFileHelper.GetTempLuaPath(path, false);
+            //}
+            //else
+            //{
+            //    //这里暂时这么处理
+            //    tempPath = aimPath;
+            //}
             //if (!ExcelParserFileHelper.IsSameFileMD5(tempPath, excelmd5))
             //{
             //    Excel excel = Excel.Parse(latestExlPath, false);

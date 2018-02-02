@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Windows.Forms;
 
 public class SVNHelper
 {
@@ -196,6 +197,35 @@ public class SVNHelper
         {
             return false;
         }
+    }
+
+    //请求进入编辑状态
+    //一、尝试请求锁定所需文件
+    //二、当
+    //    1、Excel
+    //    2、Excel对应的各个分支的lua配置
+    //    都由本机用户持有锁时，可以进入编辑状态
+    //三、否则，显示加锁失败提示
+    public static bool RequestEdit(string path)
+    {
+        bool CanBeEdit = false;
+        if (IsLockedByMe(path))
+        {
+            CanBeEdit = true;
+        }
+        else if (Lock(path, "请求锁定" + path))
+        {
+            CanBeEdit = true;
+        }
+        else
+        {
+            string message = SVNHelper.LockInfo(path);
+            string caption = "此文件锁定中";
+            MessageBoxButtons buttons = MessageBoxButtons.OK;
+            MessageBox.Show(message, caption, buttons);
+        }
+
+        return CanBeEdit;
     }
 
     private static string IdentiToState(string identifier)

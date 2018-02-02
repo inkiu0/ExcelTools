@@ -38,14 +38,11 @@
                                                 <DataTrigger Binding="{Binding Path=Status}" Value="modified">
                                                     <Setter Property="Foreground" Value="Blue"/>
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Path=Status}" Value="deleted">
-                                                    <Setter Property="Foreground" Value="Red"/>
-                                                </DataTrigger>
                                                 <DataTrigger Binding="{Binding Path=Status}" Value="added">
                                                     <Setter Property="Foreground" Value="Green"/>
                                                 </DataTrigger>
-                                                <!--锁定状态的判断-->
-                                                <DataTrigger Binding="{Binding Path=LockByMe}" Value="locked">
+                                                <!--编辑状态的判断-->
+                                                <DataTrigger Binding="{Binding Path=IsEditing}" Value="locked">
                                                     <Setter Property="Background" Value="DarkOrange"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -55,12 +52,13 @@
                             </avalonDock:LayoutAnchorable>
                         </avalonDock:LayoutAnchorablePane>
 
-                        <avalonDock:LayoutAnchorablePane DockWidth="85" DockMinWidth="60">
+                        <avalonDock:LayoutAnchorablePane DockWidth="200" DockMinWidth="60">
                             <avalonDock:LayoutAnchorable Title="ID项" CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False" >
                                 <ListView x:Name="idListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ID}" Width="53" />
+                                            <GridViewColumn Header="各分支情况" DisplayMemberBinding="{Binding States}" Width="135" />
                                         </GridView>
                                     </ListView.View>
                                     <ListView.ItemContainerStyle>

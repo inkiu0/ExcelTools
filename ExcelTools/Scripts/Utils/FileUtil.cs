@@ -33,7 +33,7 @@ class FileUtil
         return files;
     }
 
-    public static List<string> CollectFolder(string folder, string ext, Action<string, string, string,string> match)
+    public static List<string> CollectFolder(string folder, string ext, Action<string, string, string> match)
     {
         List<string> files = new List<string>();
         if (Directory.Exists(folder))
@@ -52,7 +52,7 @@ class FileUtil
         return files;
     }
 
-    public static void CollectFile(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "", Boolean collectHidden = false, Action<string, string, string, string> match = null)
+    public static void CollectFile(ref List<string> fileList, string folder, List<string> exts, bool recursive = false, string ppath = "", Boolean collectHidden = false, Action<string, string, string> match = null)
     {
         folder = AppendSlash(folder);
         ppath = AppendSlash(ppath);
@@ -68,7 +68,7 @@ class FileUtil
                     FileAttributes attributes = File.GetAttributes(fpath);
                     if(!( ((attributes & FileAttributes.Hidden) == FileAttributes.Hidden) ^ collectHidden) ){
                         fileList.Add(fpath);
-                        match?.Invoke(fpath, ppath, files[i].Name, null);
+                        match?.Invoke(fpath, ppath, files[i].Name);
                     }
                 }
             }
@@ -157,25 +157,6 @@ class FileUtil
         }
     }
 
-    public static void OpenFile(string path)
-    {
-        if (SVNHelper.IsLockedByMe(path))
-        {
-            OpenExcelApplication(path);
-        }
-        else if (SVNHelper.Lock(path, "请求锁定" + path))
-        {
-            OpenExcelApplication(path);
-        }
-        else
-        {
-            string message = SVNHelper.LockInfo(path);
-            string caption = "此文件锁定中";
-            MessageBoxButtons buttons = MessageBoxButtons.OK;
-            MessageBox.Show(message, caption, buttons);
-        }
-    }
-
     public static string AppendSlash(string path)
     {
         if (path == null || path == "")
@@ -205,29 +186,4 @@ class FileUtil
         path = path.Replace(Path.DirectorySeparatorChar, '/');
         return path;
     }
-
-    private static bool OpenExcelApplication(string path)
-    {
-        if (!File.Exists(path))
-        {
-            throw new Exception(path + "文件不存在！");
-        }
-        else
-        {
-            try
-            {
-                Microsoft.Office.Interop.Excel.Application excelApplication = new Microsoft.Office.Interop.Excel.Application();
-                Microsoft.Office.Interop.Excel.Workbooks excelWorkbooks = excelApplication.Workbooks;
-                Microsoft.Office.Interop.Excel.Workbook excelWorkbook = excelWorkbooks.Open(path, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value) as Microsoft.Office.Interop.Excel.Workbook;
-                excelApplication.Visible = true;
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(string.Format("（1）程序中没有安装Excel程序。（2）或没有安装Excel所需要支持的.NetFramework\n详细信息：{0}", ex.Message));
-            }
-        }
-    }
-
 }

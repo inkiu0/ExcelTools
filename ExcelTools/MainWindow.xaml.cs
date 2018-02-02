@@ -147,20 +147,7 @@ namespace ExcelTools
             JudgeMultiFuncBtnState();
             idListView.ItemsSource = null;
             propertyListView.ItemsSource = null;
-            if (item.Status == SVNHelper.STATE_MODIFIED)
-            {
-                string tmpExlPath = item.FilePath.Insert(item.FilePath.LastIndexOf('.'),_TempRename);
-                _DiffDic[item.FilePath] = new DifferController(item.FilePath, tmpExlPath);
-                _DiffDic[item.FilePath].Differ();
-                if (_DiffDic[item.FilePath].IDListItems.Count > 0)
-                {
-                    idListView.ItemsSource = _DiffDic[item.FilePath].IDListItems;
-                }
-            }
-            else
-            {
-                //TODO:提示 并没有内容修改，不需要重新生成配置，建议revert
-            }
+            idListView.ItemsSource = GlobalCfg.Instance.GetIDList(item.FilePath);
         }
 
         private void IDListView_RightClick(object sender, MouseButtonEventArgs e)
@@ -247,33 +234,29 @@ namespace ExcelTools
                 {
                     _ExcelFiles[i].Status = statusDic[_ExcelFiles[i].FilePath][0];
                     _ExcelFiles[i].LockByMe = statusDic[_ExcelFiles[i].FilePath][1];
-                    if(_ExcelFiles[i].Status == SVNHelper.STATE_MODIFIED)
-                    {
-                        string fileUrl = _URL + "/" + _ExcelFiles[i].FilePath.Substring(_ExcelFiles[i].FilePath.IndexOf("Cehua"));
-                        string aimPath = _ExcelFiles[i].FilePath.Insert(_ExcelFiles[i].FilePath.LastIndexOf("."), _TempRename);
-                        SVNHelper.CatFile(fileUrl, aimPath, true);
-                    }
                 }
                 else
                 {
                     _ExcelFiles[i].Status = "/";
+                    _ExcelFiles[i].LockByMe = "/";
                 }
             }
-            foreach (KeyValuePair<string, string[]> kv in statusDic)
-            {
-                //插入deleted文件
-                if (kv.Value[0] == SVNHelper.STATE_DELETED)
-                {
-                    _ExcelFiles.Add(new ExcelFileListItem()
-                    {
-                        Name = Path.GetFileNameWithoutExtension(kv.Key),
-                        Status = kv.Value[0],
-                        LockByMe = kv.Value[1],
-                        ClientServer = "C/S",
-                        FilePath = kv.Key
-                    });
-                }
-            }
+            #region 插入deleted文件(已注释)
+            //foreach (KeyValuePair<string, string[]> kv in statusDic)
+            //{
+            //    if (kv.Value[0] == SVNHelper.STATE_DELETED)
+            //    {
+            //        _ExcelFiles.Add(new ExcelFileListItem()
+            //        {
+            //            Name = Path.GetFileNameWithoutExtension(kv.Key),
+            //            Status = kv.Value[0],
+            //            LockByMe = kv.Value[1],
+            //            ClientServer = "C/S",
+            //            FilePath = kv.Key
+            //        });
+            //    }
+            //}
+            #endregion
         }
 
         private void MultiFuncBtn_Click(object sender, RoutedEventArgs e)
@@ -286,11 +269,27 @@ namespace ExcelTools
                     GetRevision();
                     break;
                 case STATE_REVERT:
-                    SVNHelper.Revert(_listItemChoosed.FilePath);
+                    if (_listItemChoosed.Status == SVNHelper.STATE_MODIFIED)
+                    {
+                        SVNHelper.Revert(_listItemChoosed.FilePath);
+                    }
+                    if(_listItemChoosed.Status == SVNHelper.STATE_ADDED)
+                    {
+                        File.Delete(_listItemChoosed.FilePath);
+                        _ExcelFiles.Remove(_listItemChoosed);
+                    }
                     CheckStateBtn_Click(null, null);
                     break;
                 case STATE_EDIT:
-                    FileUtil.OpenFile(_listItemChoosed.FilePath);
+                    //请求进入编辑状态
+                    if (SVNHelper.RequestEdit(_listItemChoosed.FilePath))
+                    {
+                        _listItemChoosed.IsEditing = true;
+                    }
+                    else
+                    {
+                        _listItemChoosed.IsEditing = false;
+                    }
                     break;
                 default:
                     break;
@@ -312,11 +311,13 @@ namespace ExcelTools
             {
                 multiFunctionBtn.Content = STATE_UPDATE;
             }
-            //有modified
-            else if (_listItemChoosed != null && _listItemChoosed.Status == SVNHelper.STATE_MODIFIED)
+            //和SVN版本库中有差异(MODIFIED和ADDED)
+            else if (_listItemChoosed != null && 
+                (_listItemChoosed.Status == SVNHelper.STATE_MODIFIED || _listItemChoosed.Status == SVNHelper.STATE_ADDED))
             {
                 multiFunctionBtn.Content = STATE_REVERT;
             }
+            //可请求进入编辑状态
             else if (_listItemChoosed != null && _listItemChoosed.Status == "/")
             {
                 multiFunctionBtn.Content = STATE_EDIT;
