@@ -27,7 +27,12 @@ namespace ExcelTools.Scripts.Utils
         {
             get { return _tempPath; }
         }
-        
+
+        public static string STATUS_NONE = "";
+        public static string STATUS_ADDED = "added";
+        public static string STATUS_DELETED = "deleted";
+        public static string STATUS_MODIFIED = "modified";
+
 
         //存储TempPath文件中被删除的行号
         private List<int> _deletedList = new List<int>();
@@ -309,29 +314,24 @@ namespace ExcelTools.Scripts.Utils
             FileUtil.SetHidden(_tempPath, true);
         }
 
-        struct tablerowdiff
+        public class tablerowdiff
         {
-            public HashSet<string> addedcells;
-            public HashSet<string> deletedcells;
-            public HashSet<string> modifiedcells;
+            public HashSet<string> addedcells = new HashSet<string>();
+            public HashSet<string> deletedcells = new HashSet<string>();
+            public HashSet<string> modifiedcells = new HashSet<string>();
         }
 
-        struct tablediff
+        public class tablediff
         {
-            public HashSet<string> addedrows;
-            public HashSet<string> deletedrows;
-            public Dictionary<string, tablerowdiff> modifiedrows;
+            public HashSet<string> addedrows = new HashSet<string>();
+            public HashSet<string> deletedrows = new HashSet<string>();
+            public Dictionary<string, tablerowdiff> modifiedrows = new Dictionary<string, tablerowdiff>();
         }
 
         private static void AddModifiedRow(string rowkey, string propertyname, int type, ref tablediff tdiff)
         {
             if (!tdiff.modifiedrows.ContainsKey(rowkey))
-                tdiff.modifiedrows.Add(rowkey, new tablerowdiff
-                {
-                    addedcells = new HashSet<string>(),
-                    deletedcells = new HashSet<string>(),
-                    modifiedcells = new HashSet<string>()
-                });
+                tdiff.modifiedrows.Add(rowkey, new tablerowdiff());
             switch(type)
             {
                 case 0://deleted
@@ -361,14 +361,9 @@ namespace ExcelTools.Scripts.Utils
                 AddModifiedRow(item.Key, item.Value.name, 1, ref tdiff);
         }
 
-        public static void CompareTable(table left, table right)
+        public static tablediff CompareTable(table left, table right)
         {
-            tablediff tdiff = new tablediff
-            {
-                addedrows = new HashSet<string>(),
-                deletedrows = new HashSet<string>(),
-                modifiedrows = new Dictionary<string, tablerowdiff>()
-            };
+            tablediff tdiff = new tablediff();
             for (int i = 0; i < right.configs.Count; i++)
             {
                 if (left.configsDic.ContainsKey(right.configs[i].key))
@@ -381,6 +376,7 @@ namespace ExcelTools.Scripts.Utils
             }
             foreach (var key in left.configsDic.Keys)
                 tdiff.deletedrows.Add(key);
+            return tdiff;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Lua
     {
         static string configformat = "[{0}] = {{";
         static string kvformat = "{0} = {1}";
-        public struct table
+        public class table
         {
             public string md5;
             public string name;
@@ -40,7 +40,7 @@ namespace Lua
             }
         }
 
-        public struct config
+        public class config
         {
             public string key;
             public List<property> properties;
@@ -60,7 +60,7 @@ namespace Lua
             }
         }
 
-        public struct property
+        public class property
         {
             public string name;
             public string value;
@@ -163,6 +163,14 @@ namespace Lua
             using (StreamReader sr = new StreamReader(path))
             {
                 return read_table(sr);
+            }
+        }
+
+        public static string ReadTableMD5(string path)
+        {
+            using (StreamReader sr = new StreamReader(path))
+            {
+                return read_md5comment(sr);
             }
         }
     }

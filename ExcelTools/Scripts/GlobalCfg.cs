@@ -1,6 +1,11 @@
-﻿using Lua;
+﻿using ExcelTools.Scripts.UI;
+using ExcelTools.Scripts.Utils;
+using Lua;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using static ExcelTools.Scripts.Utils.DifferController;
+using static Lua.lparser;
 
 namespace ExcelTools.Scripts
 {
@@ -8,6 +13,7 @@ namespace ExcelTools.Scripts
     {
         //表格的路径
         static public string SourcePath = null;
+        static public string LocalTmpTablePath = "../TmpTable/Local/";
         //现处于管理中的分支
         static public List<string> BranchURLs = new List<string>()
         {
@@ -60,6 +66,106 @@ namespace ExcelTools.Scripts
                 _ExcelDic[path] = Excel.Parse(path, false);
             }
             return _ExcelDic[path];
+        }
+
+        private List<table> GetLuaTables(string excelpath)
+        {
+            //对比md5，看是否需要重新生成LocalLuaTable llt
+            string tablename = string.Format("Table_{0}", Path.GetFileNameWithoutExtension(excelpath));
+            string lltpath = Path.Combine(SourcePath, LocalTmpTablePath, tablename + ".txt");
+            string md5 = ExcelParserFileHelper.GetMD5HashFromFile(excelpath);
+            if(!File.Exists(lltpath) || md5 != lparser.ReadTableMD5(lltpath))
+                ExcelParser.ReGenLuaTable(excelpath);
+            List<table> ts = new List<table>();
+            ts.Add(lparser.parse(lltpath));
+            List<string> branchs = GenTmpPath(tablename);
+            for (int i = 0; i < branchs.Count; i++)
+            {
+                if (File.Exists(lltpath))
+                    ts.Add(lparser.parse(branchs[i]));
+                else
+                    ts.Add(null);
+            }
+            return ts;
+        }
+
+
+        List<table> currentTables = new List<table>();
+        List<tablediff> currentTablediffs = new List<tablediff>();
+
+        private List<string> GetRowAllStatus(string rowid)
+        {
+            List<string> status = new List<string>();
+            for (int i = 1; i < BranchURLs.Count; i++)
+            {
+                if (currentTablediffs.Count > i || currentTablediffs[i] != null)
+                {
+                    if (currentTablediffs[i].addedrows.Contains(rowid))
+                        status.Add(DifferController.STATUS_ADDED);
+                    else if (currentTablediffs[i].deletedrows.Contains(rowid))
+                        status.Add(DifferController.STATUS_DELETED);
+                    else if (currentTablediffs[i].modifiedrows.ContainsKey(rowid))
+                        status.Add(DifferController.STATUS_MODIFIED);
+                    else
+                        status.Add(DifferController.STATUS_NONE);
+                }
+                else
+                    status.Add(DifferController.STATUS_DELETED);
+            }
+            return status;
+        }
+
+        private Dictionary<string, IDListItem> GetBranchsAddedRow()
+        {
+            Dictionary<string, IDListItem> tmpDic = new Dictionary<string, IDListItem>();
+            for (int i = 0; i < currentTablediffs.Count; i++)
+            {
+                foreach (var id in currentTablediffs[i].deletedrows)
+                {
+                    if (!tmpDic.ContainsKey(id))
+                    {
+                        tmpDic.Add(id, new IDListItem
+                        {
+                            ID = id,
+                            Row = -1,
+                            States = new List<string>(currentTablediffs.Count)
+                        });
+                        for (int k = 0; k < tmpDic[id].States.Count; k++)
+                        {
+                            tmpDic[id].States[k] = DifferController.STATUS_DELETED;
+                        }
+                    }
+                    tmpDic[id].States[i] = DifferController.STATUS_ADDED;
+                }
+            }
+            return tmpDic;
+        }
+
+        public ObservableCollection<IDListItem> GetIDList(string excelpath)
+        {
+            currentTables = GetLuaTables(excelpath);
+            currentTablediffs.Clear();
+            for (int i = 1; i < currentTables.Count; i++)
+            {
+                if (currentTables[i] != null)
+                    currentTablediffs.Add(DifferController.CompareTable(currentTables[0], currentTables[i]));
+                else
+                    currentTablediffs.Add(null);
+            }
+            ObservableCollection<IDListItem> idlist = new ObservableCollection<IDListItem>();
+            for(int i = 0; i < currentTables[0].configs.Count; i++)
+            {
+                idlist.Add(new IDListItem
+                {
+                    ID = currentTables[0].configs[i].key,
+                    Row = i,
+                    States = GetRowAllStatus(currentTables[0].configs[i].key)
+                });
+            }
+            Dictionary<string, IDListItem> tmpDic = GetBranchsAddedRow();
+            foreach (var item in tmpDic.Values)
+                idlist.Add(item);
+            return idlist;
         }
 
         //因为需要显示，四个分支都一起生成处理

@@ -69,6 +69,13 @@ class ExcelParser
         //}
     }
 
+    public static void ReGenLuaTable(string xlsxPath)
+    {
+        Excel excel = GlobalCfg.Instance.GetParsedExcel(xlsxPath);
+        string fname = excel.tableName + ".txt";
+        WriteTextFile(excel.ToString(), Path.Combine(GlobalCfg.SourcePath, GlobalCfg.LocalTmpTablePath, fname));
+    }
+
     //版本库中最新的表格若未生成配置则生成临时配置
     public static void ParseTemp(string exlPath, string branch)
     {
