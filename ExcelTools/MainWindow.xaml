@@ -83,10 +83,10 @@
                             <avalonDock:LayoutAnchorable CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False">
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Release" Height="20" Width="100" Margin="268,0,0,0"/>
+                                        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Trunk" Height="20" Width="100" Margin="268,0,0,0"/>
                                         <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_TF" Height="20" Width="100"/>
                                         <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Studio" Height="20" Width="100"/>
-                                        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Trunk" Height="20" Width="100"/>
+                                        <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Release" Height="20" Width="100"/>
                                     </StackPanel>
                                     <ListView x:Name="propertyListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
                                         <ListView.View>
