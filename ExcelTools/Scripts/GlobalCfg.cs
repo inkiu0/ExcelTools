@@ -31,6 +31,8 @@ namespace ExcelTools.Scripts
         };
         static public string ClientTablePath = "/client-refactory/Develop/Assets/Resources/Script";
 
+        static public int BranchCount { get { return BranchURLs.Count; } }
+
         static private string _Local_Table_Ext = ".txt";
         private static GlobalCfg _instance;
 
@@ -193,6 +195,19 @@ namespace ExcelTools.Scripts
                 }
             }
             return _lTableDic[exlpath];
+        }
+
+        public List<lparser.config> GetTableRow(string id)
+        {
+            List<lparser.config> rows = new List<config>();
+            for (int i = 0; i < currentTables.Count; i++)
+            {
+                if (currentTables[i] != null && currentTables[i].configsDic.ContainsKey(id))
+                    rows.Add(currentTables[i].configsDic[id]);
+                else
+                    rows.Add(null);
+            }
+            return rows;
         }
 
         static private List<string> Path2URLs(string tablePath)

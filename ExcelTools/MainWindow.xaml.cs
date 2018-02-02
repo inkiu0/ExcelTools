@@ -162,64 +162,27 @@ namespace ExcelTools
 
         private void IDListView_SelectChange(object sender, SelectionChangedEventArgs e)
         {
-            ListView listView = sender as ListView;
-            IDListItem item = listView.SelectedItem as IDListItem;
+            IDListItem item = (sender as ListView).SelectedItem as IDListItem;
             if(item == null)
-            {
                 return;
-            }
+
             Excel excel = GlobalCfg.Instance.GetParsedExcel(_listItemChoosed.FilePath);
             List<PropertyInfo> propertyList = excel.Properties;
             ObservableCollection<PropertyListItem> fieldList = new ObservableCollection<PropertyListItem>();
 
-            int trunkCfgIndex = 0;
-            int studioCfgIndex = 0;
-            int tfCfgIndex = 0;
-            int releaseCfgIndex = 0;
-            List<lparser.table> tables = GlobalCfg.Instance.GetlTable(_listItemChoosed.FilePath);
-            for (int i = 0; i < tables[0].configs.Count; i++)
-            {
-                if (tables[0].configs[i].key == item.ID.ToString())
-                {
-                    trunkCfgIndex = i;
-                }
-            }
-            for (int i = 0; i < tables[1].configs.Count; i++)
-            {
-                if (tables[0].configs[i].key == item.ID.ToString())
-                {
-                    studioCfgIndex = i;
-                }
-            }
-            for (int i = 0; i < tables[2].configs.Count; i++)
-            {
-                if (tables[0].configs[i].key == item.ID.ToString())
-                {
-                    tfCfgIndex = i;
-                }
-            }
-            for (int i = 0; i < tables[3].configs.Count; i++)
-            {
-                if (tables[0].configs[i].key == item.ID.ToString())
-                {
-                    releaseCfgIndex = i;
-                }
-            }
-
+            List<lparser.config> configs = GlobalCfg.Instance.GetTableRow(item.ID);
+            string ename = string.Empty;
             for (int i = 0; i < propertyList.Count; i++)
             {
+                ename = propertyList[i].ename;
                 fieldList.Add(new PropertyListItem()
                 {
                     PropertyName = propertyList[i].cname,
-                    Context = item.State == "deleted" ? null : excel.rows[item.Row - 5].cells[i].GetValue(),
-                    Trunk = i >= tables[0].configs[trunkCfgIndex].properties.Count ?
-                        null : tables[0].configs[trunkCfgIndex].properties[i].value,
-                    Studio = i >= tables[1].configs[trunkCfgIndex].properties.Count ?
-                        null : tables[1].configs[studioCfgIndex].properties[i].value,
-                    TF = i >= tables[2].configs[trunkCfgIndex].properties.Count ?
-                        null : tables[2].configs[tfCfgIndex].properties[i].value,
-                    Release = i >= tables[3].configs[trunkCfgIndex].properties.Count ?
-                        null : tables[3].configs[releaseCfgIndex].properties[i].value
+                    Context = configs[0] != null && configs[0].propertiesDic.ContainsKey(ename) ? configs[0].propertiesDic[ename].value : null,
+                    Trunk = configs[1] != null && configs[1].propertiesDic.ContainsKey(ename) ? configs[1].propertiesDic[ename].value : null,
+                    Studio = configs[2] != null && configs[2].propertiesDic.ContainsKey(ename) ? configs[2].propertiesDic[ename].value : null,
+                    TF = configs[3] != null && configs[3].propertiesDic.ContainsKey(ename) ? configs[3].propertiesDic[ename].value : null,
+                    Release = configs[4] != null && configs[4].propertiesDic.ContainsKey(ename) ? configs[4].propertiesDic[ename].value : null
                 });
             }
             propertyListView.ItemsSource = fieldList;
