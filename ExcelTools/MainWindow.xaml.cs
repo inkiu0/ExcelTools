@@ -299,29 +299,17 @@ namespace ExcelTools
             base.OnClosing(e);
         }
 
+        static List<string> branchs = new List<string>{ "genTableBtn_Trunk", "genTableBtn_Studio", "genTableBtn_TF", "genTableBtn_Release" };
         private void GenTableBtn_Click(object sender, RoutedEventArgs e)
         {
             Button genBtn = sender as Button;
-            string aimUrl = "";
-            string tmpPath = "";
-            switch (genBtn.Name)
+            string aimUrl = string.Empty;
+            string tmpPath = string.Empty;
+            int idx = branchs.IndexOf(genBtn.Name);
+            if (idx > -1)
             {
-                case "genTableBtn_Release":
-                    aimUrl += GlobalCfg.BranchURLs[3] + GlobalCfg.ClientTablePath;
-                    tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[3];
-                    break;
-                case "genTableBtn_TF":
-                    aimUrl += GlobalCfg.BranchURLs[2] + GlobalCfg.ClientTablePath;
-                    tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[2];
-                    break;
-                case "genTableBtn_Studio":
-                    aimUrl += GlobalCfg.BranchURLs[1] + GlobalCfg.ClientTablePath;
-                    tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[1];
-                    break;
-                case "genTableBtn_Trunk":
-                    aimUrl += GlobalCfg.BranchURLs[0] + GlobalCfg.ClientTablePath;
-                    tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[0];
-                    break;
+                aimUrl += GlobalCfg.BranchURLs[idx] + GlobalCfg.ClientTablePath;
+                tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[idx];
             }
             _DiffDic[_listItemChoosed.FilePath].ConfirmChangesAndCommit(tmpPath, aimUrl);
         }
