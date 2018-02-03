@@ -314,34 +314,20 @@ namespace ExcelTools.Scripts.Utils
             FileUtil.SetHidden(_tempPath, true);
         }
 
-        public class tablerowdiff
-        {
-            public HashSet<string> addedcells = new HashSet<string>();
-            public HashSet<string> deletedcells = new HashSet<string>();
-            public HashSet<string> modifiedcells = new HashSet<string>();
-        }
-
-        public class tablediff
-        {
-            public HashSet<string> addedrows = new HashSet<string>();
-            public HashSet<string> deletedrows = new HashSet<string>();
-            public Dictionary<string, tablerowdiff> modifiedrows = new Dictionary<string, tablerowdiff>();
-        }
-
-        private static void AddModifiedRow(string rowkey, string propertyname, int type, ref tablediff tdiff)
+        private static void AddModifiedRow(string rowkey, property property, int type, ref tablediff tdiff)
         {
             if (!tdiff.modifiedrows.ContainsKey(rowkey))
                 tdiff.modifiedrows.Add(rowkey, new tablerowdiff());
             switch(type)
             {
                 case 0://deleted
-                    tdiff.modifiedrows[rowkey].deletedcells.Add(propertyname);
+                    tdiff.modifiedrows[rowkey].deletedcells.Add(property.name, property);
                     break;
                 case 1://added
-                    tdiff.modifiedrows[rowkey].addedcells.Add(propertyname);
+                    tdiff.modifiedrows[rowkey].addedcells.Add(property.name, property);
                     break;
                 case 2://modified
-                    tdiff.modifiedrows[rowkey].modifiedcells.Add(propertyname);
+                    tdiff.modifiedrows[rowkey].modifiedcells.Add(property.name, property);
                     break;
             }
         }
@@ -351,32 +337,80 @@ namespace ExcelTools.Scripts.Utils
             for (int i = 0; i < right.properties.Count; i++)
             {
                 if (!left.propertiesDic.ContainsKey(right.properties[i].name))
-                    AddModifiedRow(right.key, right.properties[i].name, 0, ref tdiff);
+                    AddModifiedRow(right.key, right.properties[i], 0, ref tdiff);
                 else if (!left.propertiesDic[right.properties[i].name].value.Equals(right.properties[i].value))
-                    AddModifiedRow(right.key, right.properties[i].name, 2, ref tdiff);
+                    AddModifiedRow(right.key, right.properties[i], 2, ref tdiff);
                 else
                     left.propertiesDic.Remove(right.properties[i].name);
             }
             foreach(var item in left.propertiesDic)
-                AddModifiedRow(item.Key, item.Value.name, 1, ref tdiff);
+                AddModifiedRow(item.Key, item.Value, 1, ref tdiff);
         }
 
         public static tablediff CompareTable(table left, table right)
         {
             tablediff tdiff = new tablediff();
-            for (int i = 0; i < right.configs.Count; i++)
+            if (left != null && right != null)
             {
-                if (left.configsDic.ContainsKey(right.configs[i].key))
+                for (int i = 0; i < right.configs.Count; i++)
                 {
-                    CompareTablerow(left.configsDic[right.configs[i].key], right.configs[i], ref tdiff);
-                    left.configsDic.Remove(right.configs[i].key);
+                    if (left.configsDic.ContainsKey(right.configs[i].key))
+                    {
+                        CompareTablerow(left.configsDic[right.configs[i].key], right.configs[i], ref tdiff);
+                        left.configsDic.Remove(right.configs[i].key);
+                    }
+                    else
+                        tdiff.addedrows.Add(right.configs[i].key, right.configs[i]);
                 }
-                else
-                    tdiff.addedrows.Add(right.configs[i].key);
             }
-            foreach (var key in left.configsDic.Keys)
-                tdiff.deletedrows.Add(key);
+            if(left != null)
+                foreach (var item in left.configsDic)
+                    tdiff.deletedrows.Add(item.Key, item.Value);
             return tdiff;
+        }
+    }
+
+    public class tablerowdiff
+    {
+        public Dictionary<string, property> addedcells = new Dictionary<string, property>();
+        public Dictionary<string, property> deletedcells = new Dictionary<string, property>();
+        public Dictionary<string, property> modifiedcells = new Dictionary<string, property>();
+
+        public void ApplyAdded(string key)
+        {
+            addedcells.Remove(key);
+        }
+
+        public void ApplyDeleted(string key)
+        {
+            deletedcells.Remove(key);
+        }
+
+        public void ApplyModify(string key)
+        {
+            modifiedcells.Remove(key);
+        }
+    }
+
+    public class tablediff
+    {
+        public Dictionary<string, config> addedrows = new Dictionary<string, config>();
+        public Dictionary<string, config> deletedrows = new Dictionary<string, config>();
+        public Dictionary<string, tablerowdiff> modifiedrows = new Dictionary<string, tablerowdiff>();
+
+        public void ApplyAdded(string key)
+        {
+            addedrows.Remove(key);
+        }
+
+        public void ApplyDeleted(string key)
+        {
+            deletedrows.Remove(key);
+        }
+
+        public void ApplyModify(string key)
+        {
+            modifiedrows.Remove(key);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ExcelTools.Scripts.Utils;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -17,26 +18,57 @@ namespace Lua
         {
             public string md5;
             public string name;
-            public List<config> configs;
-            public Dictionary<string, config> configsDic;
+            public List<config> configs = new List<config>();
+            public Dictionary<string, config> configsDic = new Dictionary<string, config>();
 
-            public string GenString(Func<string> callback)
+            public table(string _md5, string _name)
+            {
+                md5 = _md5;
+                name = _name;
+            }
+
+            public string GenString(Func<string> callback = null, tablediff filter = null)
             {
                 StringBuilder sb = new StringBuilder();
                 sb.Append("--" + md5 + "\n");
                 sb.Append(name + " = {\n");
+                int rows = 0;
                 for (int i = 0; i < configs.Count; i++)
                 {
-                    sb.Append("\t");
-                    sb.Append(configs[i].GenString());
-                    if (i < configs.Count - 1)
-                        sb.Append(",");
-                    sb.Append("\n");
+                    if (filter != null && filter.deletedrows.ContainsKey(configs[i].key))
+                        continue;
+                    if(filter != null && filter.modifiedrows.ContainsKey(configs[i].key))
+                        AppendConfig(ref sb, configs[i], filter.modifiedrows[configs[i].key]);
+                    else
+                        AppendConfig(ref sb, configs[i]);
+                    rows++;
                 }
+                if (filter != null & filter.addedrows.Count > 0)//是否需要追加若干行配置
+                {
+                    AppendAddedRows(filter.addedrows, ref sb);
+                    rows++;
+                }
+                if (rows > 0)
+                    sb.Remove(sb.Length - 2, 1);//删除最后一行的逗号 ','
                 sb.Append("}\n");
-                sb.Append(callback());
+                if(callback != null)
+                    sb.Append(callback());
                 sb.Append("return " + name);
                 return sb.ToString();
+            }
+
+            void AppendAddedRows(Dictionary<string, config> confDic, ref StringBuilder sb)
+            {
+                foreach(var conf in confDic.Values)
+                    AppendConfig(ref sb, conf);
+            }
+
+            void AppendConfig(ref StringBuilder sb, config conf, tablerowdiff filter = null)
+            {
+                sb.Append("\t");
+                sb.Append(conf.GenString(filter));
+                sb.Append(",");
+                sb.Append("\n");
             }
 
             public void RemoveConfig(string key)
@@ -71,20 +103,72 @@ namespace Lua
         public class config
         {
             public string key;
-            public List<property> properties;
-            public Dictionary<string, property> propertiesDic;
+            public List<property> properties = new List<property>();
+            public Dictionary<string, property> propertiesDic = new Dictionary<string, property>();
 
-            public string GenString()
+            public config(string k)
+            {
+                key = k;
+            }
+
+            public string GenString(tablerowdiff filter = null)
             {
                 StringBuilder sb = new StringBuilder(string.Format(configformat, key));
+                int cells = 0;
                 for(int i = 0; i < properties.Count; i++)
                 {
-                    sb.Append(properties[i].GenString());
-                    if (i < properties.Count - 1)
-                        sb.Append(", ");
+                    if (filter != null && filter.deletedcells.ContainsKey(properties[i].name))
+                        continue;
+                    if(filter != null && filter.modifiedcells.ContainsKey(properties[i].name))
+                        AppendProperty(ref sb, properties[i], filter.modifiedcells[properties[i].name].value);
+                    else
+                        AppendProperty(ref sb, properties[i]);
+                    cells++;
                 }
+                if (filter != null && filter.addedcells.Count > 0)
+                {
+                    foreach (var p in filter.addedcells.Values)
+                        AppendProperty(ref sb, p);
+                    cells++;
+                }
+                if (cells > 0)//删除最后一行的逗号和空格 ", "
+                    sb.Remove(sb.Length - 2, 2);
                 sb.Append("}");
                 return sb.ToString();
+            }
+
+            void AppendProperty(ref StringBuilder sb, property p, string newvalue = null)
+            {
+                sb.Append(p.GenString(newvalue));
+                sb.Append(", ");
+            }
+
+            public void RemoveProperty(string key)
+            {
+                if (propertiesDic.ContainsKey(key))
+                {
+                    properties.Remove(propertiesDic[key]);
+                    propertiesDic.Remove(key);
+                }
+            }
+
+            public void AddProperty(property p)
+            {
+                if (!propertiesDic.ContainsKey(p.name))
+                {
+                    propertiesDic[p.name] = p;
+                    properties.Add(p);
+                }
+            }
+
+            public void ModifyProperty(property p)
+            {
+                if (propertiesDic.ContainsKey(p.name))
+                {
+                    int index = properties.IndexOf(propertiesDic[p.name]);
+                    properties[index] = p;
+                    propertiesDic[p.name] = p;
+                }
             }
         }
 
@@ -93,9 +177,11 @@ namespace Lua
             public string name;
             public string value;
 
-            public string GenString()
+            public string GenString(string newvalue = null)
             {
-                return string.Format(kvformat, name, value);
+                if(newvalue == null)
+                    return string.Format(kvformat, name, value);
+                return string.Format(kvformat, name, newvalue);
             }
         }
 
@@ -121,12 +207,7 @@ namespace Lua
         static config read_config(StreamReader sr)
         {
             //llex_lite.llex(sr); /* read key */
-            config config = new config
-            {
-                key = llex_lite.buff2str(),/* read key */
-                properties = new List<property>(),
-                propertiesDic = new Dictionary<string, property>()
-            };
+            config config = new config(llex_lite.buff2str());/* read key */
             llex_lite.llex(sr, true);/* skip '{' */
             string k, v = null;
             while (!sr.EndOfStream && llex_lite.llex(sr) != '}')
@@ -142,13 +223,7 @@ namespace Lua
         {
             string md5Str = read_md5comment(sr);
             llex_lite.llex(sr); /* read key */
-            table t = new table
-            {
-                md5 = md5Str,
-                name = llex_lite.buff2str(),
-                configs = new List<config>(),
-                configsDic = new Dictionary<string, config>()
-            };
+            table t = new table(md5Str, llex_lite.buff2str());
             llex_lite.llex(sr, true);/* skip '{' */
             while(!sr.EndOfStream && llex_lite.llex(sr) != '}')
             {

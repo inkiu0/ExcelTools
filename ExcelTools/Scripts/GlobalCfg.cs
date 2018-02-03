@@ -104,9 +104,9 @@ namespace ExcelTools.Scripts
             {
                 if (currentTablediffs.Count > i && currentTablediffs[i] != null)
                 {
-                    if (currentTablediffs[i].addedrows.Contains(rowid))
+                    if (currentTablediffs[i].addedrows.ContainsKey(rowid))
                         status.Add(DifferController.STATUS_ADDED);
-                    else if (currentTablediffs[i].deletedrows.Contains(rowid))
+                    else if (currentTablediffs[i].deletedrows.ContainsKey(rowid))
                         status.Add(DifferController.STATUS_DELETED);
                     else if (currentTablediffs[i].modifiedrows.ContainsKey(rowid))
                         status.Add(DifferController.STATUS_MODIFIED);
@@ -126,7 +126,7 @@ namespace ExcelTools.Scripts
             {
                 if (currentTablediffs[i] != null)
                 {
-                    foreach (var id in currentTablediffs[i].deletedrows)
+                    foreach (var id in currentTablediffs[i].deletedrows.Keys)
                     {
                         if (!tmpDic.ContainsKey(id))
                         {
