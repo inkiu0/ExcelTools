@@ -27,6 +27,12 @@ namespace Lua
                 name = _name;
             }
 
+            public table(table t)
+            {
+                md5 = t.md5;
+                name = t.name;
+            }
+
             public string GenString(Func<string> callback = null, tablediff filter = null)
             {
                 StringBuilder sb = new StringBuilder();
@@ -71,7 +77,24 @@ namespace Lua
                 sb.Append("\n");
             }
 
-            public void RemoveConfig(string key)
+            public void Apply(string status, config cfg, string key = null)
+            {
+                switch (status)
+                {
+                    case DifferController.STATUS_ADDED:
+                        RemoveConfig(key);
+                        break;
+                    case DifferController.STATUS_DELETED:
+                        AddConfig(cfg);
+                        break;
+                    case DifferController.STATUS_MODIFIED:
+                        ModifyConfig(cfg);
+                        break;
+                    default: break;
+                }
+            }
+
+            void RemoveConfig(string key)
             {
                 if (configsDic.ContainsKey(key))
                 {
@@ -80,7 +103,7 @@ namespace Lua
                 }
             }
 
-            public void AddConfig(config cfg)
+            void AddConfig(config cfg)
             {
                 if (!configsDic.ContainsKey(cfg.key))
                 {
@@ -89,7 +112,7 @@ namespace Lua
                 }
             }
 
-            public void ModifyConfig(config cfg)
+            void ModifyConfig(config cfg)
             {
                 if (configsDic.ContainsKey(cfg.key))
                 {
@@ -143,16 +166,33 @@ namespace Lua
                 sb.Append(", ");
             }
 
-            public void RemoveProperty(string key)
+            public void Apply(string status, property p)
             {
-                if (propertiesDic.ContainsKey(key))
+                switch (status)
                 {
-                    properties.Remove(propertiesDic[key]);
-                    propertiesDic.Remove(key);
+                    case DifferController.STATUS_ADDED:
+                        AddProperty(p);
+                        break;
+                    case DifferController.STATUS_DELETED:
+                        RemoveProperty(p);
+                        break;
+                    case DifferController.STATUS_MODIFIED:
+                        ModifyProperty(p);
+                        break;
+                    default: break;
                 }
             }
 
-            public void AddProperty(property p)
+            void RemoveProperty(property p)
+            {
+                if (propertiesDic.ContainsKey(p.name))
+                {
+                    properties.Remove(propertiesDic[p.name]);
+                    propertiesDic.Remove(p.name);
+                }
+            }
+
+            void AddProperty(property p)
             {
                 if (!propertiesDic.ContainsKey(p.name))
                 {
@@ -161,7 +201,7 @@ namespace Lua
                 }
             }
 
-            public void ModifyProperty(property p)
+            void ModifyProperty(property p)
             {
                 if (propertiesDic.ContainsKey(p.name))
                 {

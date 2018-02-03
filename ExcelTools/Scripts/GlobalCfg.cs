@@ -93,7 +93,7 @@ namespace ExcelTools.Scripts
             return ts;
         }
 
-
+        #region UI数据相关
         List<table> currentTables = new List<table>();
         List<tablediff> currentTablediffs = new List<tablediff>();
 
@@ -126,7 +126,7 @@ namespace ExcelTools.Scripts
             {
                 if (currentTablediffs[i] != null)
                 {
-                    foreach (var id in currentTablediffs[i].deletedrows.Keys)
+                    foreach (var id in currentTablediffs[i].addedrows.Keys)
                     {
                         if (!tmpDic.ContainsKey(id))
                         {
@@ -134,12 +134,10 @@ namespace ExcelTools.Scripts
                             {
                                 ID = id,
                                 Row = -1,
-                                States = new List<string>(currentTablediffs.Count)
+                                States = new List<string>()
                             });
-                            for (int k = 0; k < tmpDic[id].States.Count; k++)
-                            {
+                            for (int k = 0; k < BranchCount; k++)//初始化状态为STATUS_DELETED
                                 tmpDic[id].States[k] = DifferController.STATUS_DELETED;
-                            }
                         }
                         tmpDic[id].States[i] = DifferController.STATUS_ADDED;
                     }
@@ -154,10 +152,10 @@ namespace ExcelTools.Scripts
             currentTablediffs.Clear();
             for (int i = 1; i < currentTables.Count; i++)
             {
-                if (currentTables[i] != null)
+                //if (currentTables[i] != null)
                     currentTablediffs.Add(DifferController.CompareTable(currentTables[0], currentTables[i]));
-                else
-                    currentTablediffs.Add(null);
+                //else
+                //    currentTablediffs.Add(null);
             }
             ObservableCollection<IDListItem> idlist = new ObservableCollection<IDListItem>();
             for(int i = 0; i < currentTables[0].configs.Count; i++)
@@ -174,6 +172,34 @@ namespace ExcelTools.Scripts
                 idlist.Add(item);
             return idlist;
         }
+
+        public void ApplyRow(int branchIdx, IDListItem item)
+        {
+            //if(currentTablediffs.Count > branchIdx && currentTables.Count > branchIdx + 1 &&
+            //    currentTablediffs[branchIdx] != null && currentTables[branchIdx + 1] != null &&
+            //    item != null && item.States.Count > branchIdx)
+            //{
+            //}
+            table lt = currentTables[0];//local table
+            table bt = currentTables[branchIdx + 1];//branch table
+            tablediff btd = currentTablediffs[branchIdx];//branch tablediff
+
+            if (bt == null)
+                bt = new table(lt);
+
+            string status = item.States[branchIdx];
+            btd.Apply(status, item.ID);
+
+            if (status == DifferController.STATUS_ADDED)
+                bt.Apply(status, null, item.ID);
+            else if (lt.configsDic.ContainsKey(item.ID))
+            {
+                config cfg = lt.configsDic[item.ID];
+                bt.Apply(status, cfg);
+            }
+            string tmp = bt.GenString(null, btd);
+        }
+        #endregion
 
         //因为需要显示，四个分支都一起生成处理
         public List<lparser.table> GetlTable(string exlpath, bool reParse = false)

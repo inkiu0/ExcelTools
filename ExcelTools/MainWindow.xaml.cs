@@ -26,7 +26,8 @@ namespace ExcelTools
         private string _localRev;
         private string _serverRev;
 
-        private ExcelFileListItem _listItemChoosed;
+        private ExcelFileListItem _listItemChoosed = null;
+        private IDListItem _IDItemSelected = null;
 
         public MainWindow()
         {
@@ -144,6 +145,7 @@ namespace ExcelTools
             {
                 return;
             }
+            _IDItemSelected = null;
             JudgeMultiFuncBtnState();
             idListView.ItemsSource = null;
             propertyListView.ItemsSource = null;
@@ -170,6 +172,7 @@ namespace ExcelTools
             List<PropertyInfo> propertyList = excel.Properties;
             ObservableCollection<PropertyListItem> fieldList = new ObservableCollection<PropertyListItem>();
 
+            _IDItemSelected = item;
             List<lparser.config> configs = GlobalCfg.Instance.GetTableRow(item.ID);
             string ename = string.Empty;
             for (int i = 0; i < propertyList.Count; i++)
@@ -306,12 +309,10 @@ namespace ExcelTools
             string aimUrl = string.Empty;
             string tmpPath = string.Empty;
             int idx = branchs.IndexOf(genBtn.Name);
-            if (idx > -1)
+            if (idx > -1 && _IDItemSelected != null)
             {
-                aimUrl += GlobalCfg.BranchURLs[idx] + GlobalCfg.ClientTablePath;
-                tmpPath += GlobalCfg.SourcePath + "/" + GlobalCfg.TmpTablePaths[idx];
+                GlobalCfg.Instance.ApplyRow(idx, _IDItemSelected);
             }
-            _DiffDic[_listItemChoosed.FilePath].ConfirmChangesAndCommit(tmpPath, aimUrl);
         }
     }
 }

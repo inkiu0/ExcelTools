@@ -28,10 +28,10 @@ namespace ExcelTools.Scripts.Utils
             get { return _tempPath; }
         }
 
-        public static string STATUS_NONE = "";
-        public static string STATUS_ADDED = "added";
-        public static string STATUS_DELETED = "deleted";
-        public static string STATUS_MODIFIED = "modified";
+        public const string STATUS_NONE = "";
+        public const string STATUS_ADDED = "added";
+        public const string STATUS_DELETED = "deleted";
+        public const string STATUS_MODIFIED = "modified";
 
 
         //存储TempPath文件中被删除的行号
@@ -376,19 +376,21 @@ namespace ExcelTools.Scripts.Utils
         public Dictionary<string, property> deletedcells = new Dictionary<string, property>();
         public Dictionary<string, property> modifiedcells = new Dictionary<string, property>();
 
-        public void ApplyAdded(string key)
+        public void Apply(string status, string key)
         {
-            addedcells.Remove(key);
-        }
-
-        public void ApplyDeleted(string key)
-        {
-            deletedcells.Remove(key);
-        }
-
-        public void ApplyModify(string key)
-        {
-            modifiedcells.Remove(key);
+            switch (status)
+            {
+                case DifferController.STATUS_ADDED:
+                    addedcells.Remove(key);
+                    break;
+                case DifferController.STATUS_DELETED:
+                    deletedcells.Remove(key);
+                    break;
+                case DifferController.STATUS_MODIFIED:
+                    modifiedcells.Remove(key);
+                    break;
+                default: break;
+            }
         }
     }
 
@@ -398,19 +400,21 @@ namespace ExcelTools.Scripts.Utils
         public Dictionary<string, config> deletedrows = new Dictionary<string, config>();
         public Dictionary<string, tablerowdiff> modifiedrows = new Dictionary<string, tablerowdiff>();
 
-        public void ApplyAdded(string key)
+        public void Apply(string status, string key)
         {
-            addedrows.Remove(key);
-        }
-
-        public void ApplyDeleted(string key)
-        {
-            deletedrows.Remove(key);
-        }
-
-        public void ApplyModify(string key)
-        {
-            modifiedrows.Remove(key);
+            switch(status)
+            {
+                case DifferController.STATUS_ADDED:
+                    addedrows.Remove(key);
+                    break;
+                case DifferController.STATUS_DELETED:
+                    deletedrows.Remove(key);
+                    break;
+                case DifferController.STATUS_MODIFIED:
+                    modifiedrows.Remove(key);
+                    break;
+                default: break;
+            }
         }
     }
 }
