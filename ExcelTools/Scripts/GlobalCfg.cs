@@ -22,13 +22,16 @@ namespace ExcelTools.Scripts
             "svn://svn.sg.xindong.com/RO/client-branches/TF",
             "svn://svn.sg.xindong.com/RO/client-branches/Release"
         };
-        static public List<string> TmpTablePaths = new List<string>()
+        static public List<string> TmpTableRelativePaths = new List<string>()
         {
             "../TmpTable/Trunk/",
             "../TmpTable/Studio/",
             "../TmpTable/TF/",
             "../TmpTable/Release/"
         };
+
+        static public List<string> TmpTableRealPaths;
+        
         static public string ClientTablePath = "/client-refactory/Develop/Assets/Resources/Script";
 
         static public int BranchCount { get { return BranchURLs.Count; } }
@@ -82,11 +85,11 @@ namespace ExcelTools.Scripts
                 ExcelParser.ReGenLuaTable(excelpath);
             List<table> ts = new List<table>();
             ts.Add(lparser.parse(lltpath));
-            List<string> branchs = GenTmpPath(tablename);
-            for (int i = 0; i < branchs.Count; i++)
+            TmpTableRealPaths = GenTmpPath(tablename);
+            for (int i = 0; i < TmpTableRealPaths.Count; i++)
             {
-                if (File.Exists(branchs[i]))
-                    ts.Add(lparser.parse(branchs[i]));
+                if (File.Exists(TmpTableRealPaths[i]))
+                    ts.Add(lparser.parse(TmpTableRealPaths[i]));
                 else
                     ts.Add(null);
             }
@@ -173,6 +176,7 @@ namespace ExcelTools.Scripts
             return idlist;
         }
 
+        //仅修改逻辑缓存中的值，不直接修改配置文件
         public void ApplyRow(int branchIdx, IDListItem item)
         {
             //if(currentTablediffs.Count > branchIdx && currentTables.Count > branchIdx + 1 &&
@@ -185,21 +189,26 @@ namespace ExcelTools.Scripts
             tablediff btd = currentTablediffs[branchIdx];//branch tablediff
 
             if (bt == null)
+            {
                 bt = new table(lt);
+                currentTables[branchIdx + 1] = bt;
+            }
 
             string status = item.States[branchIdx];
             btd.Apply(status, item.ID);
 
-            if (status == DifferController.STATUS_ADDED)
-                bt.Apply(status, null, item.ID);
-            else if (lt.configsDic.ContainsKey(item.ID))
-            {
-                config cfg = lt.configsDic[item.ID];
-                bt.Apply(status, cfg);
-            }
-            string tmp = bt.GenString(null, btd);
+            ExcuteModified(lt, bt, btd, branchIdx);
         }
         #endregion
+
+        //根据目前选择的操作，修改配置文件
+        public void ExcuteModified(table lt, table bt, tablediff btd, int branchIdx)
+        {
+            btd.Apply2Table(lt, bt);
+            string tmp = bt.GenString(null, btd);
+            string aimTmpPath = TmpTableRealPaths[branchIdx];
+            FileUtil.WriteTextFile(tmp, aimTmpPath);
+        }
 
         //因为需要显示，四个分支都一起生成处理
         public List<lparser.table> GetlTable(string exlpath, bool reParse = false)
@@ -251,16 +260,16 @@ namespace ExcelTools.Scripts
         //生成临时table的路径
         private static List<string> GenTmpPath(string tableName)
         {
-            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[0]));
-            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[1]));
-            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[2]));
-            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTablePaths[3]));
+            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTableRelativePaths[0]));
+            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTableRelativePaths[1]));
+            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTableRelativePaths[2]));
+            Directory.CreateDirectory(Path.Combine(SourcePath, TmpTableRelativePaths[3]));
             List<string> tmpFolders = new List<string>
             {
-                Path.Combine(SourcePath, TmpTablePaths[0], tableName) + _Local_Table_Ext,
-                Path.Combine(SourcePath, TmpTablePaths[1], tableName) + _Local_Table_Ext,
-                Path.Combine(SourcePath, TmpTablePaths[2], tableName) + _Local_Table_Ext,
-                Path.Combine(SourcePath, TmpTablePaths[3], tableName) + _Local_Table_Ext
+                Path.Combine(SourcePath, TmpTableRelativePaths[0], tableName) + _Local_Table_Ext,
+                Path.Combine(SourcePath, TmpTableRelativePaths[1], tableName) + _Local_Table_Ext,
+                Path.Combine(SourcePath, TmpTableRelativePaths[2], tableName) + _Local_Table_Ext,
+                Path.Combine(SourcePath, TmpTableRelativePaths[3], tableName) + _Local_Table_Ext
             };
             return tmpFolders;
         }

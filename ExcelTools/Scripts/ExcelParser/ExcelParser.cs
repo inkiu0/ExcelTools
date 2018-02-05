@@ -76,7 +76,7 @@ class ExcelParser
         string md5 = ExcelParserFileHelper.GetMD5HashFromFile(xlsxPath);
         string contents = "--md5:" + md5 + "\n";
         contents += excel.ToString();
-        WriteTextFile(contents, Path.Combine(GlobalCfg.SourcePath, GlobalCfg.LocalTmpTablePath, fname));
+        FileUtil.WriteTextFile(contents, Path.Combine(GlobalCfg.SourcePath, GlobalCfg.LocalTmpTablePath, fname));
     }
 
     //版本库中最新的表格若未生成配置则生成临时配置
@@ -92,14 +92,14 @@ class ExcelParser
     {
         string contents = "--md5:" + md5 + "\n";
         contents += excel.ToString();
-        WriteTextFile(contents, targetPath);
+        FileUtil.WriteTextFile(contents, targetPath);
     }
 
     private static void GenClientVersion(Excel excel, string targetPath, string md5)
     {
         string contents = "--md5:" + md5 + "\n";
         contents += excel.ToString();
-        WriteTextFile(contents, targetPath);
+        FileUtil.WriteTextFile(contents, targetPath);
     }
 
     private void MatchExcelFile(string path, string relativeDir, string fileNameContainExt)
@@ -181,26 +181,9 @@ class ExcelParser
     static void WriteTableImportFile(string contents, bool isServer = true)
     {
         string path = ExcelParserFileHelper.GetTempLuaPath(_TableImportPath, isServer);
-        WriteTextFile(contents, path);
+        FileUtil.WriteTextFile(contents, path);
     }
 
-    static void WriteTextFile(string contents, string path)
-    {
-        string dir = Path.GetDirectoryName(path);
-        if (!Directory.Exists(dir))
-            Directory.CreateDirectory(dir);
-        if (!File.Exists(path))
-        {
-            using (StreamWriter sw = File.CreateText(path))
-            {
-                sw.Write(contents);
-            }
-        }
-        else
-        {
-            FileUtil.OverWriteText(path, contents);
-        }
-    }
     public static DataTable GetExcelTableByOleDB(string path)
     {
         try

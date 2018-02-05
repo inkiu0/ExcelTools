@@ -393,10 +393,13 @@ namespace ExcelTools.Scripts.Utils
         public Dictionary<string, config> addedrows = new Dictionary<string, config>();
         public Dictionary<string, config> deletedrows = new Dictionary<string, config>();
         public Dictionary<string, tablerowdiff> modifiedrows = new Dictionary<string, tablerowdiff>();
+        //当前选择执行操作
+        public Dictionary<string, string> applyDic = new Dictionary<string, string>();
 
         public void Apply(string status, string key)
         {
-            switch(status)
+            applyDic[key] = status;
+            switch (status)
             {
                 case DifferController.STATUS_ADDED:
                     addedrows.Remove(key);
@@ -408,6 +411,21 @@ namespace ExcelTools.Scripts.Utils
                     modifiedrows.Remove(key);
                     break;
                 default: break;
+            }
+        }
+
+        //记录中全部应用
+        public void Apply2Table(table lt,table bt)
+        {
+            foreach(KeyValuePair<string,string> kv in applyDic)
+            {
+                if (kv.Value == DifferController.STATUS_MODIFIED)
+                    bt.Apply(kv.Value, null, kv.Key);
+                else if (lt.configsDic.ContainsKey(kv.Key))
+                {
+                    config cfg = lt.configsDic[kv.Key];
+                    bt.Apply(kv.Value, cfg);
+                }
             }
         }
     }

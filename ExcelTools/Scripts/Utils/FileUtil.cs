@@ -180,6 +180,24 @@ class FileUtil
         }
     }
 
+    public static void WriteTextFile(string contents, string path)
+    {
+        string dir = Path.GetDirectoryName(path);
+        if (!Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+        if (!File.Exists(path))
+        {
+            using (StreamWriter sw = File.CreateText(path))
+            {
+                sw.Write(contents);
+            }
+        }
+        else
+        {
+            OverWriteText(path, contents);
+        }
+    }
+
     public static string PathCombine(params string[] paths)
     {
         var path = Path.Combine(paths);
