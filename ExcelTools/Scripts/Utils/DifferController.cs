@@ -358,7 +358,7 @@ namespace ExcelTools.Scripts.Utils
             }
             if(left != null)
                 foreach (var item in left.configsDic)
-                    if(!right.configsDic.ContainsKey(item.Key))
+                    if(right == null || !right.configsDic.ContainsKey(item.Key))
                         tdiff.deletedrows.Add(item.Key, item.Value);
             return tdiff;
         }
