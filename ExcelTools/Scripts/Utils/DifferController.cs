@@ -132,7 +132,6 @@ namespace ExcelTools.Scripts.Utils
                 {
                     ID = GlobalCfg.Instance.GetParsedExcel(_localPath).rows[_modifiedList[i] - 5].cells[0].GetValue(),
                     Row = _modifiedList[i],
-                    State = "modified",
                 });
             }
             for (int i = 0; i < _addedList.Count; i++)
@@ -143,7 +142,6 @@ namespace ExcelTools.Scripts.Utils
                     {
                         ID = GlobalCfg.Instance.GetParsedExcel(_localPath).rows[_addedList[i] - 5].cells[0].GetValue(),
                         Row = _addedList[i],
-                        State = "added",
                     });
                 }
             }
@@ -155,7 +153,6 @@ namespace ExcelTools.Scripts.Utils
                     {
                         ID = GlobalCfg.Instance.GetParsedExcel(_tempPath).rows[_deletedList[i] - 5].cells[0].GetValue(),
                         Row = _deletedList[i],
-                        State = "deleted",
                     });
                 }
             }

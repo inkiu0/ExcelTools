@@ -9,8 +9,22 @@ namespace ExcelTools.Scripts.UI
 
         public int Row { get; set; }
 
-        public string State { get; set; }
+        public List<string> States {
+            get { return States; }
+            set {
+                TrunkState = value[0];
+                StudioState = value[1];
+                TFState = value[2];
+                ReleaseState = value[3];
+                }
+        }
 
-        public List<string> States { get; set; }
+        public string TrunkState { get; set; }
+
+        public string StudioState { get; set; }
+
+        public string TFState { get; set; }
+
+        public string ReleaseState { get; set; }
     }
 }

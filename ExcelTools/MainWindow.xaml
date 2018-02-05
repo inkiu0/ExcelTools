@@ -52,30 +52,18 @@
                             </avalonDock:LayoutAnchorable>
                         </avalonDock:LayoutAnchorablePane>
 
-                        <avalonDock:LayoutAnchorablePane DockWidth="200" DockMinWidth="60">
+                        <avalonDock:LayoutAnchorablePane DockWidth="275" DockMinWidth="60">
                             <avalonDock:LayoutAnchorable Title="ID项" CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False" >
                                 <ListView x:Name="idListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ID}" Width="53" />
-                                            <GridViewColumn Header="各分支情况" DisplayMemberBinding="{Binding States}" Width="135" />
+                                            <GridViewColumn Header="Trunk" DisplayMemberBinding="{Binding TrunkState}" Width="53" />
+                                            <GridViewColumn Header="Studio" DisplayMemberBinding="{Binding StudioState}" Width="53" />
+                                            <GridViewColumn Header="TF" DisplayMemberBinding="{Binding TFState}" Width="53" />
+                                            <GridViewColumn Header="Release" DisplayMemberBinding="{Binding ReleaseState}" Width="53" />
                                         </GridView>
                                     </ListView.View>
-                                    <ListView.ItemContainerStyle>
-                                        <Style TargetType="{x:Type ListViewItem}">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Path=State}" Value="modified">
-                                                    <Setter Property="Foreground" Value="Blue"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Path=State}" Value="deleted">
-                                                    <Setter Property="Foreground" Value="Red"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Path=State}" Value="added">
-                                                    <Setter Property="Foreground" Value="Green"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ListView.ItemContainerStyle>
                                 </ListView>
                             </avalonDock:LayoutAnchorable>
                         </avalonDock:LayoutAnchorablePane>

@@ -100,7 +100,7 @@ namespace ExcelTools.Scripts
         private List<string> GetRowAllStatus(string rowid)
         {
             List<string> status = new List<string>();
-            for (int i = 1; i < BranchURLs.Count; i++)
+            for (int i = 0; i < BranchURLs.Count; i++)
             {
                 if (currentTablediffs.Count > i && currentTablediffs[i] != null)
                 {
