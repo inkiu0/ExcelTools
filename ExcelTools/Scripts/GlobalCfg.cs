@@ -190,7 +190,7 @@ namespace ExcelTools.Scripts
             string status = item.States[branchIdx];
             btd.Apply(status, item.ID);
 
-            if (status == DifferController.STATUS_ADDED)
+            if (status == DifferController.STATUS_DELETED)
                 bt.Apply(status, null, item.ID);
             else if (lt.configsDic.ContainsKey(item.ID))
             {
