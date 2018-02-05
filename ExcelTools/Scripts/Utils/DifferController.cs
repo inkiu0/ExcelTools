@@ -340,7 +340,7 @@ namespace ExcelTools.Scripts.Utils
             }
             foreach(var item in left.propertiesDic)
                 if(!right.propertiesDic.ContainsKey(item.Key))
-                    AddModifiedRow(item.Key, item.Value, 1, ref tdiff);
+                    AddModifiedRow(left.key, item.Value, 1, ref tdiff);
         }
 
         public static tablediff CompareTable(table left, table right)
