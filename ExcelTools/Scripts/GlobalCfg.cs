@@ -70,7 +70,7 @@ namespace ExcelTools.Scripts
             }
             if (!_ExcelDic.ContainsKey(path) || reParse)
             {
-                _ExcelDic[path] = Excel.Parse(path, false);
+                _ExcelDic[path] = Excel.Parse(path, true);
             }
             return _ExcelDic[path];
         }
