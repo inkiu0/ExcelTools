@@ -122,14 +122,14 @@ namespace ExcelTools.Scripts
             return status;
         }
 
-        private Dictionary<string, IDListItem> GetBranchsAddedRow()
+        private Dictionary<string, IDListItem> GetExcelDeletedRow()
         {
             Dictionary<string, IDListItem> tmpDic = new Dictionary<string, IDListItem>();
             for (int i = 0; i < currentTablediffs.Count; i++)
             {
                 if (currentTablediffs[i] != null)
                 {
-                    foreach (var id in currentTablediffs[i].addedrows.Keys)
+                    foreach (var id in currentTablediffs[i].deletedrows.Keys)
                     {
                         if (!tmpDic.ContainsKey(id))
                         {
@@ -139,10 +139,10 @@ namespace ExcelTools.Scripts
                                 Row = -1,
                                 States = new List<string>()
                             });
-                            for (int k = 0; k < BranchCount; k++)//初始化状态为STATUS_DELETED
-                                tmpDic[id].States.Add(DifferController.STATUS_DELETED);
+                            for (int k = 0; k < BranchCount; k++)//初始化状态为STATUS_NONE
+                                tmpDic[id].States.Add(DifferController.STATUS_NONE);
                         }
-                        tmpDic[id].States[i] = DifferController.STATUS_ADDED;
+                        tmpDic[id].States[i] = DifferController.STATUS_DELETED;
                     }
                 }
             }
@@ -170,7 +170,7 @@ namespace ExcelTools.Scripts
                     States = GetRowAllStatus(currentTables[0].configs[i].key)
                 });
             }
-            Dictionary<string, IDListItem> tmpDic = GetBranchsAddedRow();
+            Dictionary<string, IDListItem> tmpDic = GetExcelDeletedRow();
             foreach (var item in tmpDic.Values)
                 idlist.Add(item);
             return idlist;

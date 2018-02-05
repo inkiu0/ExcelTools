@@ -41,7 +41,7 @@ namespace Lua
                 int rows = 0;
                 for (int i = 0; i < configs.Count; i++)
                 {
-                    if (filter != null && filter.deletedrows.ContainsKey(configs[i].key))
+                    if (filter != null && filter.addedrows.ContainsKey(configs[i].key))
                         continue;
                     if(filter != null && filter.modifiedrows.ContainsKey(configs[i].key))
                         AppendConfig(ref sb, configs[i], filter.modifiedrows[configs[i].key]);
@@ -49,11 +49,11 @@ namespace Lua
                         AppendConfig(ref sb, configs[i]);
                     rows++;
                 }
-                if (filter != null && filter.addedrows.Count > 0)//是否需要追加若干行配置
-                {
-                    AppendAddedRows(filter.addedrows, ref sb);
-                    rows++;
-                }
+                //if (filter != null && filter.deletedrows.Count > 0)//是否需要追加若干行配置
+                //{
+                //    AppendExcelDelRows(filter.deletedrows, ref sb);
+                //    rows++;
+                //}
                 if (rows > 0)
                     sb.Remove(sb.Length - 2, 1);//删除最后一行的逗号 ','
                 sb.Append("}\n");
@@ -63,7 +63,7 @@ namespace Lua
                 return sb.ToString();
             }
 
-            void AppendAddedRows(Dictionary<string, config> confDic, ref StringBuilder sb)
+            void AppendExcelDelRows(Dictionary<string, config> confDic, ref StringBuilder sb)
             {
                 foreach(var conf in confDic.Values)
                     AppendConfig(ref sb, conf);
@@ -82,10 +82,10 @@ namespace Lua
                 switch (status)
                 {
                     case DifferController.STATUS_ADDED:
-                        RemoveConfig(key);
+                        AddConfig(cfg);
                         break;
                     case DifferController.STATUS_DELETED:
-                        AddConfig(cfg);
+                        RemoveConfig(key);
                         break;
                     case DifferController.STATUS_MODIFIED:
                         ModifyConfig(cfg);
