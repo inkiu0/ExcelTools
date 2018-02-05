@@ -137,7 +137,7 @@ namespace ExcelTools.Scripts
                                 States = new List<string>()
                             });
                             for (int k = 0; k < BranchCount; k++)//初始化状态为STATUS_DELETED
-                                tmpDic[id].States[k] = DifferController.STATUS_DELETED;
+                                tmpDic[id].States.Add(DifferController.STATUS_DELETED);
                         }
                         tmpDic[id].States[i] = DifferController.STATUS_ADDED;
                     }

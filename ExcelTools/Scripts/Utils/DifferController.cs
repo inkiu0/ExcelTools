@@ -337,14 +337,13 @@ namespace ExcelTools.Scripts.Utils
             for (int i = 0; i < right.properties.Count; i++)
             {
                 if (!left.propertiesDic.ContainsKey(right.properties[i].name))
-                    AddModifiedRow(right.key, right.properties[i], 0, ref tdiff);
+                    AddModifiedRow(right.key, right.properties[i], 1, ref tdiff);
                 else if (!left.propertiesDic[right.properties[i].name].value.Equals(right.properties[i].value))
                     AddModifiedRow(right.key, right.properties[i], 2, ref tdiff);
-                else
-                    left.propertiesDic.Remove(right.properties[i].name);
             }
             foreach(var item in left.propertiesDic)
-                AddModifiedRow(item.Key, item.Value, 1, ref tdiff);
+                if(!right.propertiesDic.ContainsKey(item.Key))
+                    AddModifiedRow(item.Key, item.Value, 0, ref tdiff);
         }
 
         public static tablediff CompareTable(table left, table right)
@@ -355,17 +354,15 @@ namespace ExcelTools.Scripts.Utils
                 for (int i = 0; i < right.configs.Count; i++)
                 {
                     if (left.configsDic.ContainsKey(right.configs[i].key))
-                    {
                         CompareTablerow(left.configsDic[right.configs[i].key], right.configs[i], ref tdiff);
-                        left.configsDic.Remove(right.configs[i].key);
-                    }
                     else
                         tdiff.addedrows.Add(right.configs[i].key, right.configs[i]);
                 }
             }
             if(left != null)
                 foreach (var item in left.configsDic)
-                    tdiff.deletedrows.Add(item.Key, item.Value);
+                    if(!right.configsDic.ContainsKey(item.Key))
+                        tdiff.deletedrows.Add(item.Key, item.Value);
             return tdiff;
         }
     }
