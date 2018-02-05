@@ -113,20 +113,10 @@ namespace ExcelTools
             };
             folderBrowser.ShowDialog();
             string path = folderBrowser.SelectedPath.Replace(@"\", "/");
-            if (path.Contains("Table"))
+            using (StreamWriter cfgSt = new StreamWriter(_ConfigPath))
             {
-                using (StreamWriter cfgSt = new StreamWriter(_ConfigPath))
-                {
-                    cfgSt.WriteLine(path);
-                    cfgSt.Close();
-                }
-            }
-            else
-            {
-                string message = path + "不是Cehua/Table路径\n请选择包含Table的路径！";
-                string caption = "Error";
-                System.Windows.Forms.MessageBoxButtons buttons = System.Windows.Forms.MessageBoxButtons.OK;
-                System.Windows.Forms.MessageBox.Show(message, caption, buttons);
+                cfgSt.WriteLine(path);
+                cfgSt.Close();
             }
         }
         #endregion

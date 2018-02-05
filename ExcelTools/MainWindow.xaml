@@ -11,7 +11,7 @@
         <DockPanel>
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="File">
-                    <MenuItem Name="menuOpen" Header="打开表格所在目录" Click="ChangeSourcePath_Click"></MenuItem>
+                    <MenuItem Name="menuOpen" Header="打开" Click="ChangeSourcePath_Click"></MenuItem>
                 </MenuItem>
                 <MenuItem Header="View"></MenuItem>
                 <MenuItem Header="About"></MenuItem>
