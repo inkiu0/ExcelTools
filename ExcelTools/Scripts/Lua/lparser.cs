@@ -49,7 +49,7 @@ namespace Lua
                         AppendConfig(ref sb, configs[i]);
                     rows++;
                 }
-                if (filter != null & filter.addedrows.Count > 0)//是否需要追加若干行配置
+                if (filter != null && filter.addedrows.Count > 0)//是否需要追加若干行配置
                 {
                     AppendAddedRows(filter.addedrows, ref sb);
                     rows++;
@@ -313,7 +313,8 @@ namespace Lua
         {
             using (StreamReader sr = new StreamReader(path))
             {
-                return read_md5comment(sr);
+                string md5comment = read_md5comment(sr);
+                return md5comment.Substring(4, md5comment.Length - 4);
             }
         }
     }
