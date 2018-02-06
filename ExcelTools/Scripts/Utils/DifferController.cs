@@ -29,9 +29,9 @@ namespace ExcelTools.Scripts.Utils
         }
 
         public const string STATUS_NONE = "";
-        public const string STATUS_ADDED = "added";
-        public const string STATUS_DELETED = "deleted";
-        public const string STATUS_MODIFIED = "modified";
+        public const string STATUS_ADDED = "A";
+        public const string STATUS_DELETED = "D";
+        public const string STATUS_MODIFIED = "M";
 
 
         //存储TempPath文件中被删除的行号

@@ -108,6 +108,29 @@ class FileUtil
         }
     }
 
+    public static bool FindFile(string filePath, string fileName, ref List<string> paths)
+    {
+        if (string.IsNullOrEmpty(fileName)) return false;
+
+        DirectoryInfo di = new DirectoryInfo(filePath);
+        DirectoryInfo[] arrDir = di.GetDirectories();
+
+        foreach (DirectoryInfo dir in arrDir)
+        {
+            if (FindFile(di + "/" + dir.ToString() + "/", fileName, ref paths))
+                return true;
+        }
+
+        foreach (FileInfo fi in di.GetFiles("*.*"))
+        {
+            if (fi.Name == fileName)
+            {
+                paths.Add(fi.FullName);
+            }
+        }
+        return false;
+    }
+
     public static bool RenameFile(string filePath, string rename)
     {
         try

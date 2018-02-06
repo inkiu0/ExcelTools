@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Windows.Input;
 using ExcelTools.Scripts.UI;
 using Lua;
+using static SVNHelper;
 
 namespace ExcelTools
 {
@@ -81,8 +82,9 @@ namespace ExcelTools
                 _ExcelFiles.Add(new ExcelFileListItem()
                 {
                     Name = Path.GetFileNameWithoutExtension(files[i]),
-                    Status = "/",
-                    LockByMe = "",
+                    IsSame = true,
+                    IsEditing = false,
+                    Paths = new List<string>(),
                     ClientServer = "C/S",
                     FilePath = files[i]
                 });
@@ -183,18 +185,20 @@ namespace ExcelTools
 
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
         {
-            Dictionary<string, string[]> statusDic = SVNHelper.Status(_Folders[0], _Folders[1]);
+            Dictionary<string, FileStatusStr> statusDic = SVNHelper.AllStatus();
             for(int i = 0; i < _ExcelFiles.Count; i++)
             {
-                if (statusDic.ContainsKey(_ExcelFiles[i].FilePath))
+                if (statusDic.ContainsKey(_ExcelFiles[i].Name))
                 {
-                    _ExcelFiles[i].Status = statusDic[_ExcelFiles[i].FilePath][0];
-                    _ExcelFiles[i].LockByMe = statusDic[_ExcelFiles[i].FilePath][1];
+                    _ExcelFiles[i].IsSame = statusDic[_ExcelFiles[i].Name].isSame;
+                    _ExcelFiles[i].Paths = statusDic[_ExcelFiles[i].Name].paths;
+                    _ExcelFiles[i].IsEditing = statusDic[_ExcelFiles[i].Name].isLock;
                 }
                 else
                 {
-                    _ExcelFiles[i].Status = "/";
-                    _ExcelFiles[i].LockByMe = "/";
+                    _ExcelFiles[i].IsSame = true;
+                    _ExcelFiles[i].IsEditing = false;
+                    _ExcelFiles[i].Paths.Clear();
                 }
             }
             #region 插入deleted文件(已注释)
@@ -225,15 +229,7 @@ namespace ExcelTools
                     GetRevision();
                     break;
                 case STATE_REVERT:
-                    if (_listItemChoosed.Status == SVNHelper.STATE_MODIFIED)
-                    {
-                        SVNHelper.Revert(_listItemChoosed.FilePath);
-                    }
-                    if(_listItemChoosed.Status == SVNHelper.STATE_ADDED)
-                    {
-                        File.Delete(_listItemChoosed.FilePath);
-                        _ExcelFiles.Remove(_listItemChoosed);
-                    }
+                    RevertAll(_listItemChoosed.Paths);
                     CheckStateBtn_Click(null, null);
                     break;
                 case STATE_EDIT:
@@ -268,13 +264,12 @@ namespace ExcelTools
                 multiFunctionBtn.Content = STATE_UPDATE;
             }
             //和SVN版本库中有差异(MODIFIED和ADDED)
-            else if (_listItemChoosed != null && 
-                (_listItemChoosed.Status == SVNHelper.STATE_MODIFIED || _listItemChoosed.Status == SVNHelper.STATE_ADDED))
+            else if (_listItemChoosed != null && !_listItemChoosed.IsSame)
             {
                 multiFunctionBtn.Content = STATE_REVERT;
             }
             //可请求进入编辑状态
-            else if (_listItemChoosed != null && _listItemChoosed.Status == "/")
+            else if (_listItemChoosed != null && _listItemChoosed.IsSame)
             {
                 multiFunctionBtn.Content = STATE_EDIT;
             }

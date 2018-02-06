@@ -36,7 +36,7 @@ namespace ExcelTools.Scripts
 
         static public int BranchCount { get { return BranchURLs.Count; } }
 
-        static private string _Local_Table_Ext = ".txt";
+        static public string _Local_Table_Ext = ".txt";
         private static GlobalCfg _instance;
 
         public static GlobalCfg Instance

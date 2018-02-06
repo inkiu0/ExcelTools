@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using ExcelTools.Scripts;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 
@@ -102,6 +103,142 @@ public class SVNHelper
         }
     }
 
+    #region 原始Excel及相关配置的捆绑操作
+
+    public struct FileStatusStr
+    {
+        public string exlSourceNm;
+        public bool isSame;
+        public bool isLock;
+        public List<string> paths;
+    }
+
+    public static Dictionary<string, FileStatusStr> AllStatus()
+    {
+        Dictionary<string, FileStatusStr> dic = new Dictionary<string, FileStatusStr>();
+        Dictionary<string, string[]> strDic = Status(GlobalCfg.SourcePath + "/..");
+        foreach(KeyValuePair<string, string[]> kv in strDic)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(kv.Key);
+            string excelName = fileName.Contains("Table_") ? 
+                fileName.Substring(fileName.IndexOf("_") + 1) : 
+                fileName;
+            bool islock = false;
+            bool issame = true;
+            if (kv.Value[1] == STATE_LOCKED)
+            {
+                islock = IsLockAll(excelName);
+            }
+            if (kv.Value[0] != "") {
+                issame = false;
+            }
+            if (islock || !issame)
+            {
+                if (!dic.ContainsKey(excelName))
+                {
+                    dic[excelName] = new FileStatusStr
+                    {
+                        exlSourceNm = excelName,
+                        isSame = issame,
+                        isLock = islock,
+                        paths = new List<string>()
+                    };
+                }
+                if(!issame)
+                    dic[excelName].paths.Add(kv.Key);
+            }
+        }
+        return dic;
+    }
+
+    //不仅仅是revert操作,将所有状态恢复
+    public static void RevertAll(List<string> paths)
+    {
+        for(int i = 0; i < paths.Count; i++)
+        {
+            Dictionary<string, string[]> dic = Status(paths[i]);
+            string state = dic[paths[i]][0];
+            switch (state)
+            {
+                case STATE_MODIFIED:
+                    Revert(paths[i]);
+                    break;
+                case STATE_ADDED:
+                    File.Delete(paths[i]);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    public static bool IsLockAll(string exlNm)
+    {
+        List<string> paths = GetAllPaths(exlNm);
+        for(int i = 0; i < paths.Count; i++)
+        {
+            if (!IsLockedByMe(paths[i]))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static bool RequestEdit(string exlpath)
+    {
+        if (!File.Exists(exlpath))
+            return false;
+        List<string> paths = GetAllPaths(Path.GetFileNameWithoutExtension(exlpath));
+        Stack<string> haslockPaths = new Stack<string>();
+        for (int i = 0; i < paths.Count; i++)
+        {
+            if (!IsLockedByMe(paths[i]))
+            {
+                if(Lock(paths[i], "请求锁定" + paths[i]))
+                {
+                    haslockPaths.Push(paths[i]);
+                }
+                else
+                {
+                    string message = SVNHelper.LockInfo(exlpath);
+                    string caption = "无法进入编辑状态";
+                    MessageBoxButtons buttons = MessageBoxButtons.OK;
+                    MessageBox.Show(message, caption, buttons);
+                    break;
+                }
+            }
+            else
+            {
+                haslockPaths.Push(paths[i]);
+            }
+            //成功进入编辑状态，继续持有锁
+            if (i == paths.Count - 1)
+            {
+                return true;
+            }
+        }
+
+        //未成功进入编辑状态，释放锁
+        for(int i = 0; i < haslockPaths.Count; i++)
+        {
+            ReleaseLock(haslockPaths.Pop());
+        }
+
+        return false;
+    }
+
+    public static List<string> GetAllPaths(string exlNmWithoutExt)
+    {
+        List<string> paths = new List<string>();
+        FileUtil.FindFile(GlobalCfg.SourcePath + "/../TmpTable", exlNmWithoutExt, ref paths);
+        string luaNm = "Table_" + exlNmWithoutExt + GlobalCfg._Local_Table_Ext;
+        FileUtil.FindFile(GlobalCfg.SourcePath + "/../TmpTable", luaNm, ref paths);
+        return paths;
+    }
+
+    #endregion
+
     /// <summary>
     /// 可获得目标文件的状态
     /// </summary>
@@ -118,7 +255,7 @@ public class SVNHelper
             {
                 string[] tmp = str.Split(' ');
                 //info数组元素：[0]状态[1]锁定状态[2]文件路径
-                string[] info = new string[3] { "/", "", "" };
+                string[] info = new string[3] { "", "", "" };
                 info[0] = tmp[0];
                 info[2] = tmp[tmp.Length -1];
                 for (int i = 1; i< tmp.Length -1;i++)
@@ -197,35 +334,6 @@ public class SVNHelper
         {
             return false;
         }
-    }
-
-    //请求进入编辑状态
-    //一、尝试请求锁定所需文件
-    //二、当
-    //    1、Excel
-    //    2、Excel对应的各个分支的lua配置
-    //    都由本机用户持有锁时，可以进入编辑状态
-    //三、否则，显示加锁失败提示
-    public static bool RequestEdit(string path)
-    {
-        bool CanBeEdit = false;
-        if (IsLockedByMe(path))
-        {
-            CanBeEdit = true;
-        }
-        else if (Lock(path, "请求锁定" + path))
-        {
-            CanBeEdit = true;
-        }
-        else
-        {
-            string message = SVNHelper.LockInfo(path);
-            string caption = "此文件锁定中";
-            MessageBoxButtons buttons = MessageBoxButtons.OK;
-            MessageBox.Show(message, caption, buttons);
-        }
-
-        return CanBeEdit;
     }
 
     private static string IdentiToState(string identifier)
