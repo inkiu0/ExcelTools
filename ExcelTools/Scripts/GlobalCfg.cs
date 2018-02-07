@@ -9,6 +9,12 @@ using static Lua.lparser;
 
 namespace ExcelTools.Scripts
 {
+    class LuaTableData
+    {
+        public List<table> tables;
+        public List<tablediff> tableDiffs;
+    }
+
     class GlobalCfg
     {
         //表格的路径
@@ -30,11 +36,11 @@ namespace ExcelTools.Scripts
             "../TmpTable/Release/"
         };
 
-        static public List<string> TmpTableRealPaths;
-        
-        static public string ClientTablePath = "/client-refactory/Develop/Assets/Resources/Script";
+        static public List<string> TmpTableRealPaths;       
 
         static public int BranchCount { get { return BranchURLs.Count; } }
+
+        static public bool isServer = true;
 
         static public string _Local_Table_Ext = ".txt";
         private static GlobalCfg _instance;
@@ -52,15 +58,15 @@ namespace ExcelTools.Scripts
         private GlobalCfg()
         {
             _ExcelDic = new Dictionary<string, Excel>();
-            _lTableDic = new Dictionary<string, List<lparser.table>>();
         }
 
         //所有表格的解析都存在这里
         //TODO：之后可能用多线程提早个别表格的解析操作，优化操作体验
         private Dictionary<string, Excel> _ExcelDic;
 
-        //Table配置的解析存在这里
-        private Dictionary<string, List<lparser.table>> _lTableDic;
+        private Dictionary<string, LuaTableData> _lTableDataDic;
+
+        private Dictionary<string, ObservableCollection<IDListItem>> _IDListDic;
 
         public Excel GetParsedExcel(string path, bool reParse = false)
         {
@@ -70,19 +76,27 @@ namespace ExcelTools.Scripts
             }
             if (!_ExcelDic.ContainsKey(path) || reParse)
             {
-                _ExcelDic[path] = Excel.Parse(path, true);
+                _ExcelDic[path] = Excel.Parse(path, isServer);
             }
             return _ExcelDic[path];
         }
 
         private List<table> GetLuaTables(string excelpath)
         {
+            if (!_lTableDataDic.ContainsKey(excelpath))
+            {
+                _lTableDataDic[excelpath] = new LuaTableData();
+                _lTableDataDic[excelpath].tables = new List<table>();
+                _lTableDataDic[excelpath].tableDiffs = new List<tablediff>();
+            }
             //对比md5，看是否需要重新生成LocalLuaTable llt
             string tablename = string.Format("Table_{0}", Path.GetFileNameWithoutExtension(excelpath));
             string lltpath = Path.Combine(SourcePath, LocalTmpTablePath, tablename + ".txt");
             string md5 = ExcelParserFileHelper.GetMD5HashFromFile(excelpath);
-            if(!File.Exists(lltpath) || md5 != lparser.ReadTableMD5(lltpath))
+            if (!File.Exists(lltpath) || md5 != lparser.ReadTableMD5(lltpath))
+            {
                 ExcelParser.ReGenLuaTable(excelpath);
+            }
             List<table> ts = new List<table>();
             ts.Add(lparser.parse(lltpath));
             TmpTableRealPaths = GenTmpPath(tablename);
@@ -167,7 +181,8 @@ namespace ExcelTools.Scripts
                 {
                     ID = currentTables[0].configs[i].key,
                     Row = i,
-                    States = GetRowAllStatus(currentTables[0].configs[i].key)
+                    States = GetRowAllStatus(currentTables[0].configs[i].key),
+                    IsApplys = new List<bool>() { false, false, false, false }
                 });
             }
             Dictionary<string, IDListItem> tmpDic = GetExcelDeletedRow();
@@ -196,40 +211,19 @@ namespace ExcelTools.Scripts
 
             string status = item.States[branchIdx];
             btd.Apply(status, item.ID);
-
-            ExcuteModified(lt, bt, btd, branchIdx);
         }
         #endregion
 
         //根据目前选择的操作，修改配置文件
-        public void ExcuteModified(table lt, table bt, tablediff btd, int branchIdx)
+        public void ExcuteModified(int branchIdx)
         {
+            table lt = currentTables[0];//local table
+            table bt = currentTables[branchIdx + 1];//branch table
+            tablediff btd = currentTablediffs[branchIdx];//branch tablediff
             btd.Apply2Table(lt, bt);
             string tmp = bt.GenString(null, btd);
             string aimTmpPath = TmpTableRealPaths[branchIdx];
             FileUtil.WriteTextFile(tmp, aimTmpPath);
-        }
-
-        //因为需要显示，四个分支都一起生成处理
-        public List<lparser.table> GetlTable(string exlpath, bool reParse = false)
-        {
-            //这里之后表格位置修改需要处理一下的，GetTargetLuaPath不好用
-            string tableName = Path.GetFileName(ExcelParserFileHelper.GetTargetLuaPath(exlpath,false));
-            List<string> urls = Path2URLs(ExcelParserFileHelper.GetTargetLuaPath(exlpath, false));
-            List<string> tmpFolders = GenTmpPath(tableName);
-            for (int i = 0; i < urls.Count; i++)
-            {
-                SVNHelper.CatFile(urls[i], tmpFolders[i], false);
-            }
-            if (!_lTableDic.ContainsKey(exlpath) || reParse)
-            {
-                _lTableDic[exlpath] = new List<lparser.table>();
-                for (int i = 0; i < tmpFolders.Count; i++)
-                {
-                    _lTableDic[exlpath].Add(lparser.parse(tmpFolders[0]));
-                }
-            }
-            return _lTableDic[exlpath];
         }
 
         public List<lparser.config> GetTableRow(string id)
@@ -243,18 +237,6 @@ namespace ExcelTools.Scripts
                     rows.Add(null);
             }
             return rows;
-        }
-
-        static private List<string> Path2URLs(string tablePath)
-        {
-            string str = tablePath.Substring(tablePath.LastIndexOf("/Config"));
-            List<string> urlList = new List<string>();
-            for (int i = 0; i < BranchURLs.Count; i++)
-            {
-                string url = BranchURLs[i] + ClientTablePath + str;
-                urlList.Add(url);
-            }
-            return urlList;
         }
 
         //生成临时table的路径

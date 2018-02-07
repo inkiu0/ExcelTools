@@ -10,5 +10,7 @@ namespace ExcelTools.Scripts.UI
         public int Row { get; set; }
 
         public List<string> States { get; set; }
+
+        public List<bool> IsApplys { get; set; }
     }
 }

@@ -177,5 +177,6 @@
     <Content Include="Xceed.Wpf.AvalonDock.dll" />
     <Content Include="Xceed.Wpf.AvalonDock.resources.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

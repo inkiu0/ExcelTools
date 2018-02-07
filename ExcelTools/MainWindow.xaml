@@ -19,10 +19,10 @@
             <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
                 <Button Content="检查状态" Click ="CheckStateBtn_Click" x:Name ="checkStateBtn" Height="20" Width="100"/>
                 <Button Content="功能" Click ="MultiFuncBtn_Click" Name="multiFunctionBtn" Height="20" Width="100"/>
-                <Button Content="生成至Trunk" Click ="GenTableBtn_Click"  Name="genTableBtn_Trunk" Height="20" Width="100" Margin="470,0,0,0"/>
-                <Button Content="生成至Studio" Click ="GenTableBtn_Click"  Name="genTableBtn_Studio" Height="20" Width="100"/>
-                <Button Content="生成至TF" Click ="GenTableBtn_Click"  Name="genTableBtn_TF" Height="20" Width="100"/>
-                <Button Content="生成至Release" Click ="GenTableBtn_Click"  Name="genTableBtn_Release" Height="20" Width="100"/>
+                <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Trunk" Height="20" Width="100" Margin="470,0,0,0" IsEnabled="False"/>
+                <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Studio" Height="20" Width="100" IsEnabled="False"/>
+                <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_TF" Height="20" Width="100" IsEnabled="False"/>
+                <Button Content="生成至" Click ="GenTableBtn_Click"  Name="genTableBtn_Release" Height="20" Width="100" IsEnabled="False"/>
             </StackPanel>
             <avalonDock:DockingManager x:Name="dockingManager" DockPanel.Dock="Top">
                 <avalonDock:LayoutRoot>

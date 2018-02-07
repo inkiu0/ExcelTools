@@ -20,9 +20,14 @@ namespace ExcelTools
     /// </summary>
     public partial class MainWindow : Window
     {
+        //功能按钮状态
         private const string STATE_UPDATE = "Update";
         private const string STATE_REVERT = "Revert";
         private const string STATE_EDIT = "编辑";
+        private const string STATE_FINISH_EDIT = "提交并结束编辑";
+        //生成按钮状态
+        private const string STATE_GEN = "生成至";
+        private const string STATE_CANCEL = "取消生成";
 
         private string _localRev;
         private string _serverRev;
@@ -35,6 +40,7 @@ namespace ExcelTools
             InitializeComponent();
         }
 
+        List<Button> GenBtns;
         CollectionViewSource view = new CollectionViewSource();
         ObservableCollection<ExcelFileListItem> _ExcelFiles = new ObservableCollection<ExcelFileListItem>();
         Dictionary<string, DifferController> _DiffDic = new Dictionary<string, DifferController>();
@@ -52,13 +58,22 @@ namespace ExcelTools
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             LoadConfig();
+            #region 初始化各列表
             tableListView.DataContext = view;
             tableListView.SelectionChanged += FileListView_SelectionChange;
             idListView.SelectionChanged += IDListView_SelectChange;
-            idListView.MouseRightButtonDown += IDListView_RightClick;
-            tableListView.Items.SortDescriptions.Add(new SortDescription("Status", ListSortDirection.Descending));
+            //tableListView.Items.SortDescriptions.Add(new SortDescription("IsEditing", ListSortDirection.Descending));
             tableListView.Items.IsLiveSorting = true;
+            #endregion
             GetRevision();
+
+            GenBtns = new List<Button>()
+            {
+                genTableBtn_Trunk,
+                genTableBtn_Studio,
+                genTableBtn_TF,
+                genTableBtn_Release
+            };
         }
 
         //1. 加载配置
@@ -141,17 +156,9 @@ namespace ExcelTools
             JudgeMultiFuncBtnState();
             idListView.ItemsSource = null;
             propertyListView.ItemsSource = null;
+            ResetGenBtnEnable();
             idListView.ItemsSource = GlobalCfg.Instance.GetIDList(item.FilePath);
-        }
-
-        private void IDListView_RightClick(object sender, MouseButtonEventArgs e)
-        {
-            //TODO:取消此行修改
-            ListView listView = sender as ListView;
-            IDListItem item = listView.SelectedItem as IDListItem;
-            int row = item.Row;
-            _DiffDic[_listItemChoosed.FilePath].RevertModified(row);
-            idListView.ItemsSource = _DiffDic[_listItemChoosed.FilePath].IDListItems;
+            ResetGenBtnState();
         }
 
         private void IDListView_SelectChange(object sender, SelectionChangedEventArgs e)
@@ -181,6 +188,7 @@ namespace ExcelTools
                 });
             }
             propertyListView.ItemsSource = fieldList;
+            ResetGenBtnState();
         }
 
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
@@ -242,11 +250,39 @@ namespace ExcelTools
                     {
                         _listItemChoosed.IsEditing = false;
                     }
+                    ResetGenBtnEnable();
+                    break;
+                case STATE_FINISH_EDIT:
+                    //TODO:执行操作
                     break;
                 default:
                     break;
             }
         }
+
+        private void ResetGenBtnEnable()
+        {
+            for(int i = 0; i < GenBtns.Count; i++)
+            {
+                GenBtns[i].IsEnabled = _listItemChoosed.IsEditing;
+            }
+        }
+
+        private void ResetGenBtnState()
+        {
+            for(int i = 0; i < GenBtns.Count; i++)
+            {
+                if (_IDItemSelected != null && _IDItemSelected.IsApplys[i])
+                {
+                    GenBtns[i].Content = STATE_CANCEL;
+                }
+                else
+                {
+                    GenBtns[i].Content = STATE_GEN;
+                }
+            }
+        }
+
 
         private void GetRevision()
         {
@@ -269,9 +305,13 @@ namespace ExcelTools
                 multiFunctionBtn.Content = STATE_REVERT;
             }
             //可请求进入编辑状态
-            else if (_listItemChoosed != null && _listItemChoosed.IsSame)
+            else if (_listItemChoosed != null && _listItemChoosed.IsSame && !_listItemChoosed.IsEditing)
             {
                 multiFunctionBtn.Content = STATE_EDIT;
+            }
+            else if (_listItemChoosed != null && _listItemChoosed.IsEditing)
+            {
+                multiFunctionBtn.Content = STATE_FINISH_EDIT;
             }
             else
             {
@@ -296,8 +336,19 @@ namespace ExcelTools
             int idx = branchs.IndexOf(genBtn.Name);
             if (idx > -1 && _IDItemSelected != null)
             {
-                GlobalCfg.Instance.ApplyRow(idx, _IDItemSelected);
+                switch (genBtn.Content) {
+                    case STATE_GEN:
+                        GlobalCfg.Instance.ApplyRow(idx, _IDItemSelected);
+                        _IDItemSelected.IsApplys[idx] = true;
+                        break;
+                    case STATE_CANCEL:
+
+                        _IDItemSelected.IsApplys[idx] = false;
+                        break;
+                }
             }
+            ResetGenBtnState();
         }
+
     }
 }
