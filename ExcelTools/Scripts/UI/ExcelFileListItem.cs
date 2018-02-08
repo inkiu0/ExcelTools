@@ -15,7 +15,8 @@ class ExcelFileListItem : INotifyPropertyChanged
         set {
             _IsSame = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSame"));
-        } }
+        }
+    }
 
     //ÊÇ·ñ´¦ÓÚ±à¼­×´Ì¬
     private bool _IsEditing;

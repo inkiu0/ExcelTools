@@ -13,6 +13,25 @@ namespace ExcelTools.Scripts
     {
         public List<table> tables;
         public List<tablediff> tableDiffs;
+        public ObservableCollection<IDListItem> idList;
+
+        public Dictionary<string, Dictionary<int, string>> applyedRows;
+
+        public void ModifiedTables(int index, table val)
+        {
+            if (tables.Count > index)
+                tables[index] = val;
+            else
+                tables.Add(val);
+        }
+
+        public bool IsInitTable(int index)
+        {
+            if (tables.Count > index)
+                return true;
+            else
+                return false;
+        }
     }
 
     class GlobalCfg
@@ -58,6 +77,7 @@ namespace ExcelTools.Scripts
         private GlobalCfg()
         {
             _ExcelDic = new Dictionary<string, Excel>();
+            _lTableDataDic = new Dictionary<string, LuaTableData>();
         }
 
         //所有表格的解析都存在这里
@@ -65,8 +85,6 @@ namespace ExcelTools.Scripts
         private Dictionary<string, Excel> _ExcelDic;
 
         private Dictionary<string, LuaTableData> _lTableDataDic;
-
-        private Dictionary<string, ObservableCollection<IDListItem>> _IDListDic;
 
         public Excel GetParsedExcel(string path, bool reParse = false)
         {
@@ -81,51 +99,62 @@ namespace ExcelTools.Scripts
             return _ExcelDic[path];
         }
 
-        private List<table> GetLuaTables(string excelpath)
+        private LuaTableData InitLuaTableData(string excelpath)
         {
             if (!_lTableDataDic.ContainsKey(excelpath))
             {
-                _lTableDataDic[excelpath] = new LuaTableData();
-                _lTableDataDic[excelpath].tables = new List<table>();
-                _lTableDataDic[excelpath].tableDiffs = new List<tablediff>();
+                _lTableDataDic[excelpath] = new LuaTableData
+                {
+                    tables = new List<table>(),
+                    tableDiffs = new List<tablediff>()
+                };
             }
             //对比md5，看是否需要重新生成LocalLuaTable llt
             string tablename = string.Format("Table_{0}", Path.GetFileNameWithoutExtension(excelpath));
             string lltpath = Path.Combine(SourcePath, LocalTmpTablePath, tablename + ".txt");
             string md5 = ExcelParserFileHelper.GetMD5HashFromFile(excelpath);
-            if (!File.Exists(lltpath) || md5 != lparser.ReadTableMD5(lltpath))
+            LuaTableData ltd = _lTableDataDic[excelpath];
+            if (!File.Exists(lltpath) || md5 != ReadTableMD5(lltpath))
             {
                 ExcelParser.ReGenLuaTable(excelpath);
             }
-            List<table> ts = new List<table>();
-            ts.Add(lparser.parse(lltpath));
-            TmpTableRealPaths = GenTmpPath(tablename);
-            for (int i = 0; i < TmpTableRealPaths.Count; i++)
+            if (!ltd.IsInitTable(0))
             {
-                if (File.Exists(TmpTableRealPaths[i]))
-                    ts.Add(lparser.parse(TmpTableRealPaths[i]));
-                else
-                    ts.Add(null);
+                ltd.ModifiedTables(0, parse(lltpath));
             }
-            return ts;
+            TmpTableRealPaths = GenTmpPath(tablename);
+            for (int i = 1; i < TmpTableRealPaths.Count + 1; i++)
+            {
+                if (File.Exists(TmpTableRealPaths[i - 1]))
+                {
+                    if (!ltd.IsInitTable(i))
+                        ltd.ModifiedTables(i, parse(TmpTableRealPaths[i - 1]));
+                }
+                else
+                {
+                    if (!ltd.IsInitTable(i))
+                        ltd.ModifiedTables(i, null);
+                }
+            }
+            return ltd;
         }
 
         #region UI数据相关
-        List<table> currentTables = new List<table>();
-        List<tablediff> currentTablediffs = new List<tablediff>();
+        LuaTableData currentLuaTableData;
+        string currentExcelpath;
 
         private List<string> GetRowAllStatus(string rowid)
         {
             List<string> status = new List<string>();
             for (int i = 0; i < BranchURLs.Count; i++)
             {
-                if (currentTablediffs.Count > i && currentTablediffs[i] != null)
+                if (currentLuaTableData.tableDiffs.Count > i && currentLuaTableData.tableDiffs[i] != null)
                 {
-                    if (currentTablediffs[i].addedrows.ContainsKey(rowid))
+                    if (currentLuaTableData.tableDiffs[i].addedrows.ContainsKey(rowid))
                         status.Add(DifferController.STATUS_ADDED);
-                    else if (currentTablediffs[i].deletedrows.ContainsKey(rowid))
+                    else if (currentLuaTableData.tableDiffs[i].deletedrows.ContainsKey(rowid))
                         status.Add(DifferController.STATUS_DELETED);
-                    else if (currentTablediffs[i].modifiedrows.ContainsKey(rowid))
+                    else if (currentLuaTableData.tableDiffs[i].modifiedrows.ContainsKey(rowid))
                         status.Add(DifferController.STATUS_MODIFIED);
                     else
                         status.Add(DifferController.STATUS_NONE);
@@ -139,11 +168,11 @@ namespace ExcelTools.Scripts
         private Dictionary<string, IDListItem> GetExcelDeletedRow()
         {
             Dictionary<string, IDListItem> tmpDic = new Dictionary<string, IDListItem>();
-            for (int i = 0; i < currentTablediffs.Count; i++)
+            for (int i = 0; i < currentLuaTableData.tableDiffs.Count; i++)
             {
-                if (currentTablediffs[i] != null)
+                if (currentLuaTableData.tableDiffs[i] != null)
                 {
-                    foreach (var id in currentTablediffs[i].deletedrows.Keys)
+                    foreach (var id in currentLuaTableData.tableDiffs[i].deletedrows.Keys)
                     {
                         if (!tmpDic.ContainsKey(id))
                         {
@@ -163,32 +192,35 @@ namespace ExcelTools.Scripts
             return tmpDic;
         }
 
-        public ObservableCollection<IDListItem> GetIDList(string excelpath)
+        public ref ObservableCollection<IDListItem> GetIDList(string excelpath)
         {
-            currentTables = GetLuaTables(excelpath);
-            currentTablediffs.Clear();
-            for (int i = 1; i < currentTables.Count; i++)
+            currentLuaTableData = InitLuaTableData(excelpath);
+            currentExcelpath = excelpath;
+            if (currentLuaTableData.tableDiffs.Count <= 0)
             {
-                //if (currentTables[i] != null)
-                    currentTablediffs.Add(DifferController.CompareTable(currentTables[0], currentTables[i]));
-                //else
-                //    currentTablediffs.Add(null);
-            }
-            ObservableCollection<IDListItem> idlist = new ObservableCollection<IDListItem>();
-            for(int i = 0; i < currentTables[0].configs.Count; i++)
-            {
-                idlist.Add(new IDListItem
+                for (int i = 1; i < currentLuaTableData.tables.Count; i++)
                 {
-                    ID = currentTables[0].configs[i].key,
-                    Row = i,
-                    States = GetRowAllStatus(currentTables[0].configs[i].key),
-                    IsApplys = new List<bool>() { false, false, false, false }
-                });
+                    currentLuaTableData.tableDiffs.Add(CompareTable(currentLuaTableData.tables[0], currentLuaTableData.tables[i]));
+                }
             }
-            Dictionary<string, IDListItem> tmpDic = GetExcelDeletedRow();
-            foreach (var item in tmpDic.Values)
-                idlist.Add(item);
-            return idlist;
+            if (currentLuaTableData.idList == null)
+            {
+                currentLuaTableData.idList = new ObservableCollection<IDListItem>();
+                for (int i = 0; i < currentLuaTableData.tables[0].configs.Count; i++)
+                {
+                    currentLuaTableData.idList.Add(new IDListItem
+                    {
+                        ID = currentLuaTableData.tables[0].configs[i].key,
+                        Row = i,
+                        States = GetRowAllStatus(currentLuaTableData.tables[0].configs[i].key),
+                        IsApplys = new List<bool>() { false, false, false, false }
+                    });
+                }
+                Dictionary<string, IDListItem> tmpDic = GetExcelDeletedRow();
+                foreach (var item in tmpDic.Values)
+                    currentLuaTableData.idList.Add(item);
+            }
+            return ref currentLuaTableData.idList;
         }
 
         //仅修改逻辑缓存中的值，不直接修改配置文件
@@ -199,40 +231,63 @@ namespace ExcelTools.Scripts
             //    item != null && item.States.Count > branchIdx)
             //{
             //}
-            table lt = currentTables[0];//local table
-            table bt = currentTables[branchIdx + 1];//branch table
-            tablediff btd = currentTablediffs[branchIdx];//branch tablediff
-
+            table lt = currentLuaTableData.tables[0];//local table
+            table bt = currentLuaTableData.tables[branchIdx + 1];//branch table
+            tablediff btd = currentLuaTableData.tableDiffs[branchIdx];//branch tablediff
             if (bt == null)
             {
                 bt = new table(lt);
-                currentTables[branchIdx + 1] = bt;
+                currentLuaTableData.tables[branchIdx + 1] = bt;
             }
 
             string status = item.States[branchIdx];
-            btd.Apply(status, item.ID);
+            btd.Apply(status, item.ID, bt, lt);
+            if(currentLuaTableData.applyedRows == null)
+            {
+                currentLuaTableData.applyedRows = new Dictionary<string, Dictionary<int, string>>();
+            }
+            if (!currentLuaTableData.applyedRows.ContainsKey(item.ID)) {
+                currentLuaTableData.applyedRows[item.ID] = new Dictionary<int, string>();
+            }
+            currentLuaTableData.applyedRows[item.ID][branchIdx] = item.States[branchIdx];
+            int index = currentLuaTableData.idList.IndexOf(item);
+            _lTableDataDic[currentExcelpath].idList[index].SetStates(STATUS_NONE, branchIdx);
         }
+
+        public void CancelRow(int branchIdx, IDListItem item)
+        {
+            Dictionary<string, Dictionary<int, string>> applyedRows = currentLuaTableData.applyedRows;
+            table bt = currentLuaTableData.tables[branchIdx + 1];//branch table
+            if(bt == null)
+            {
+                return;
+            }
+            bt.Cancel(item.ID);
+            int index = currentLuaTableData.idList.IndexOf(item);
+            _lTableDataDic[currentExcelpath].idList[index].SetStates(applyedRows[item.ID][branchIdx], branchIdx);
+            applyedRows[item.ID][branchIdx] = "";
+        }
+
         #endregion
 
         //根据目前选择的操作，修改配置文件
         public void ExcuteModified(int branchIdx)
         {
-            table lt = currentTables[0];//local table
-            table bt = currentTables[branchIdx + 1];//branch table
-            tablediff btd = currentTablediffs[branchIdx];//branch tablediff
-            btd.Apply2Table(lt, bt);
+            table lt = currentLuaTableData.tables[0];//local table
+            table bt = currentLuaTableData.tables[branchIdx + 1];//branch table
+            tablediff btd = currentLuaTableData.tableDiffs[branchIdx];//branch tablediff
             string tmp = bt.GenString(null, btd);
             string aimTmpPath = TmpTableRealPaths[branchIdx];
             FileUtil.WriteTextFile(tmp, aimTmpPath);
         }
 
-        public List<lparser.config> GetTableRow(string id)
+        public List<config> GetTableRow(string id)
         {
-            List<lparser.config> rows = new List<config>();
-            for (int i = 0; i < currentTables.Count; i++)
+            List<config> rows = new List<config>();
+            for (int i = 0; i < currentLuaTableData.tables.Count; i++)
             {
-                if (currentTables[i] != null && currentTables[i].configsDic.ContainsKey(id))
-                    rows.Add(currentTables[i].configsDic[id]);
+                if (currentLuaTableData.tables[i] != null && currentLuaTableData.tables[i].configsDic.ContainsKey(id))
+                    rows.Add(currentLuaTableData.tables[i].configsDic[id]);
                 else
                     rows.Add(null);
             }

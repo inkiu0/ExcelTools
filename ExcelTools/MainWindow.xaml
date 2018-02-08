@@ -59,10 +59,10 @@
                                     <ListView.View>
                                         <GridView>
                                             <GridViewColumn Header="ID" DisplayMemberBinding="{Binding ID}" Width="53" />
-                                            <GridViewColumn Header="Tr" DisplayMemberBinding="{Binding States[0]}" Width="25" />
-                                            <GridViewColumn Header="St" DisplayMemberBinding="{Binding States[1]}" Width="25" />
-                                            <GridViewColumn Header="TF" DisplayMemberBinding="{Binding States[2]}" Width="25" />
-                                            <GridViewColumn Header="Re" DisplayMemberBinding="{Binding States[3]}" Width="25" />
+                                            <GridViewColumn Header="Tr" DisplayMemberBinding="{Binding Trunk_State}" Width="25" />
+                                            <GridViewColumn Header="St" DisplayMemberBinding="{Binding Studio_State}" Width="25" />
+                                            <GridViewColumn Header="TF" DisplayMemberBinding="{Binding TF_State}" Width="25" />
+                                            <GridViewColumn Header="Re" DisplayMemberBinding="{Binding Release_State}" Width="25" />
                                         </GridView>
                                     </ListView.View>
                                 </ListView>

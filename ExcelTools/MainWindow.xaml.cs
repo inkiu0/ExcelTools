@@ -342,12 +342,13 @@ namespace ExcelTools
                         _IDItemSelected.IsApplys[idx] = true;
                         break;
                     case STATE_CANCEL:
-
+                        GlobalCfg.Instance.CancelRow(idx, _IDItemSelected);
                         _IDItemSelected.IsApplys[idx] = false;
                         break;
                 }
             }
-            ResetGenBtnState();
+            //刷新修改
+            IDListView_SelectChange(idListView, null);
         }
 
     }

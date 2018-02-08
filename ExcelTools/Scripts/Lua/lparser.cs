@@ -21,6 +21,9 @@ namespace Lua
             public List<config> configs = new List<config>();
             public Dictionary<string, config> configsDic = new Dictionary<string, config>();
 
+            //记录原来配置 用于回退
+            private config oldCfg = null;
+
             public table(string _md5, string _name)
             {
                 md5 = _md5;
@@ -77,6 +80,7 @@ namespace Lua
                 sb.Append("\n");
             }
 
+            #region 应用修改
             public void Apply(string status, config cfg, string key = null)
             {
                 switch (status)
@@ -98,6 +102,7 @@ namespace Lua
             {
                 if (configsDic.ContainsKey(key))
                 {
+                    oldCfg = configsDic[key];
                     configs.Remove(configsDic[key]);
                     configsDic.Remove(key);
                 }
@@ -116,11 +121,35 @@ namespace Lua
             {
                 if (configsDic.ContainsKey(cfg.key))
                 {
+                    oldCfg = configsDic[cfg.key];
                     int index = configs.IndexOf(configsDic[cfg.key]);
                     configs[index] = cfg;
                     configsDic[cfg.key] = cfg;
                 }
             }
+            #endregion
+
+            #region 回退修改
+            public void Cancel(string key)
+            {
+                //回退修改和删除
+                if(oldCfg != null)
+                {
+                    int index = configs.IndexOf(configsDic[key]);
+                    if(index < 0)
+                        configs.Add(oldCfg);
+                    else
+                        configs[index] = oldCfg;
+                    configsDic[key] = oldCfg;
+                }
+                else
+                {
+                    configs.Remove(configsDic[key]);
+                    configsDic.Remove(key);
+                }
+                oldCfg = null;
+            }
+            #endregion
         }
 
         public class config
