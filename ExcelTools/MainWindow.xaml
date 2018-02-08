@@ -70,19 +70,17 @@
                         </avalonDock:LayoutAnchorablePane>
                         <avalonDock:LayoutDocumentPane DockWidth="675" DockMinWidth="60">
                             <avalonDock:LayoutAnchorable CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False">
-                                <ListView x:Name="propertyListView" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ItemsSource="{Binding}">
-                                    <ListView.View>
-                                        <GridView>
-                                            <GridViewColumn Header="字段名" DisplayMemberBinding="{Binding PropertyName}" Width="100"/>
-                                            <GridViewColumn Header="英文名" DisplayMemberBinding="{Binding EnName}" Width="80"/>
-                                            <GridViewColumn Header="本地内容" DisplayMemberBinding="{Binding Context}" Width="165"/>
-                                            <GridViewColumn Header="Trunk" DisplayMemberBinding="{Binding Trunk}" Width="100"/>
-                                            <GridViewColumn Header="Studio" DisplayMemberBinding="{Binding Studio}" Width="100"/>
-                                            <GridViewColumn Header="TF" DisplayMemberBinding="{Binding TF}" Width="100"/>
-                                            <GridViewColumn Header="Release" DisplayMemberBinding="{Binding Release}" Width="100"/>
-                                        </GridView>
-                                    </ListView.View>
-                                </ListView>
+                                <DataGrid x:Name="propertyDataGrid" ItemsSource="{Binding}" AutoGenerateColumns="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="字段名" Width="100" Binding="{Binding PropertyName}"/>
+                                        <DataGridTextColumn Header="英文名" Width="80" Binding="{Binding EnName}"/>
+                                        <DataGridTextColumn Header="本地内容" Width="165" Binding="{Binding Context}"/>
+                                        <DataGridTextColumn Header="Trunk" Width="100" Binding="{Binding Trunk}"/>
+                                        <DataGridTextColumn Header="Studio" Width="100" Binding="{Binding Studio}"/>
+                                        <DataGridTextColumn Header="TF" Width="100" Binding="{Binding TF}"/>
+                                        <DataGridTextColumn Header="Release" Width="100" Binding="{Binding Release}"/>                                        
+                                    </DataGrid.Columns>
+                               </DataGrid>
                             </avalonDock:LayoutAnchorable>
                         </avalonDock:LayoutDocumentPane>
                     </avalonDock:LayoutPanel>

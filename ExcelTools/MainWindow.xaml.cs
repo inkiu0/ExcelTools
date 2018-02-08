@@ -153,7 +153,7 @@ namespace ExcelTools
             _IDItemSelected = null;
             JudgeMultiFuncBtnState();
             idListView.ItemsSource = null;
-            propertyListView.ItemsSource = null;
+            propertyDataGrid.ItemsSource = null;
             ResetGenBtnEnable();
             idListView.ItemsSource = GlobalCfg.Instance.GetIDList(item.FilePath);
             ResetGenBtnState();
@@ -186,8 +186,20 @@ namespace ExcelTools
                     Release = configs[4] != null && configs[4].propertiesDic.ContainsKey(ename) ? configs[4].propertiesDic[ename].value : null
                 });
             }
-            propertyListView.ItemsSource = fieldList;
+            propertyDataGrid.ItemsSource = fieldList;
             ResetGenBtnState();
+
+            for (int j = 0; j < GlobalCfg.BranchCount; j++) {
+                tablerowdiff trd = GlobalCfg.Instance.GetCellAllStatus(item.ID, j);
+                if (trd == null) {
+                    continue;
+                }
+                for (int a = 0; a < fieldList.Count; a++) {
+                    if (trd.modifiedcells != null && trd.modifiedcells.ContainsKey(fieldList[a].EnName)){
+                        //propertyDataGrid.
+                    }
+                }
+            }
         }
 
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
