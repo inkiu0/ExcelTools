@@ -5,6 +5,8 @@ namespace ExcelTools.Scripts.UI
     {
         public string PropertyName { get; set; }
 
+        public string EnName { get; set; }
+
         public string Context { get; set; }
 
         public string Trunk { get; set; }

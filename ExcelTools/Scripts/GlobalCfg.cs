@@ -165,6 +165,14 @@ namespace ExcelTools.Scripts
             return status;
         }
 
+        public tablerowdiff GetCellAllStatus(string rowid,int branchIdx)
+        {
+            if (!currentLuaTableData.tableDiffs[branchIdx].modifiedrows.ContainsKey(rowid))
+                return null;
+            tablerowdiff tablerowdiff = currentLuaTableData.tableDiffs[branchIdx].modifiedrows[rowid];
+            return tablerowdiff;
+        }
+
         private Dictionary<string, IDListItem> GetExcelDeletedRow()
         {
             Dictionary<string, IDListItem> tmpDic = new Dictionary<string, IDListItem>();
