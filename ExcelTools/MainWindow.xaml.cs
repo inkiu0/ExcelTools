@@ -10,6 +10,8 @@ using ExcelTools.Scripts;
 using ExcelTools.Scripts.UI;
 using Lua;
 using static SVNHelper;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 
 namespace ExcelTools
 {
@@ -62,6 +64,7 @@ namespace ExcelTools
             idListView.SelectionChanged += IDListView_SelectChange;
             //tableListView.Items.SortDescriptions.Add(new SortDescription("IsEditing", ListSortDirection.Descending));
             tableListView.Items.IsLiveSorting = true;
+            propertyDataGrid.SelectionUnit = DataGridSelectionUnit.Cell;
             #endregion
             GetRevision();
 
@@ -196,11 +199,73 @@ namespace ExcelTools
                 }
                 for (int a = 0; a < fieldList.Count; a++) {
                     if (trd.modifiedcells != null && trd.modifiedcells.ContainsKey(fieldList[a].EnName)){
-                        //propertyDataGrid.
+                        DataGridCell dataGridCell = GetCell(propertyDataGrid, a, j + 3);
+                        dataGridCell.Background = Brushes.LightBlue;
+                    }
+                    if (trd.modifiedcells != null && trd.addedcells.ContainsKey(fieldList[a].EnName))
+                    {
+                        DataGridCell dataGridCell = GetCell(propertyDataGrid, a, j + 3);
+                        dataGridCell.Background = Brushes.LightGreen;
+                    }
+                    if (trd.modifiedcells != null && trd.deletedcells.ContainsKey(fieldList[a].EnName))
+                    {
+                        DataGridCell dataGridCell = GetCell(propertyDataGrid, a, j + 3);
+                        dataGridCell.Background = Brushes.LightPink;
                     }
                 }
             }
         }
+
+        #region WPF DataGrid控件获取DataGridCell方法
+        private DataGridCell GetCell(DataGrid dataGrid, int rowIndex, int columnIndex)
+        {
+            DataGridRow rowContainer = GetRow(dataGrid, rowIndex);
+            if (rowContainer != null)
+            {
+                DataGridCellsPresenter presenter = GetVisualChild<DataGridCellsPresenter>(rowContainer);
+                DataGridCell cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(columnIndex);
+                if (cell == null)
+                {
+                    dataGrid.ScrollIntoView(rowContainer, dataGrid.Columns[columnIndex]);
+                    cell = (DataGridCell)presenter.ItemContainerGenerator.ContainerFromIndex(columnIndex);
+                }
+                return cell;
+            }
+            return null;
+        }
+
+        private DataGridRow GetRow(DataGrid dataGrid, int rowIndex)
+        {
+            DataGridRow rowContainer = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
+            if (rowContainer == null)
+            {
+                dataGrid.UpdateLayout();
+                dataGrid.ScrollIntoView(dataGrid.Items[rowIndex]);
+                rowContainer = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromIndex(rowIndex);
+            }
+            return rowContainer;
+        }
+
+        public T GetVisualChild<T>(Visual parent) where T : Visual
+        {
+            T child = default(T);
+            int numVisuals = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < numVisuals; i++)
+            {
+                Visual v = (Visual)VisualTreeHelper.GetChild(parent, i);
+                child = v as T;
+                if (child == null)
+                {
+                    child = GetVisualChild<T>(v);
+                }
+                if (child != null)
+                {
+                    break;
+                }
+            }
+            return child;
+        }
+        #endregion
 
         private void CheckStateBtn_Click(object sender, RoutedEventArgs e)
         {

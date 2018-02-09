@@ -70,7 +70,7 @@
                         </avalonDock:LayoutAnchorablePane>
                         <avalonDock:LayoutDocumentPane DockWidth="675" DockMinWidth="60">
                             <avalonDock:LayoutAnchorable CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False">
-                                <DataGrid x:Name="propertyDataGrid" ItemsSource="{Binding}" AutoGenerateColumns="False">
+                                <DataGrid x:Name="propertyDataGrid" ItemsSource="{Binding}" AutoGenerateColumns="False" IsReadOnly="True">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="字段名" Width="100" Binding="{Binding PropertyName}"/>
                                         <DataGridTextColumn Header="英文名" Width="80" Binding="{Binding EnName}"/>
@@ -78,9 +78,9 @@
                                         <DataGridTextColumn Header="Trunk" Width="100" Binding="{Binding Trunk}"/>
                                         <DataGridTextColumn Header="Studio" Width="100" Binding="{Binding Studio}"/>
                                         <DataGridTextColumn Header="TF" Width="100" Binding="{Binding TF}"/>
-                                        <DataGridTextColumn Header="Release" Width="100" Binding="{Binding Release}"/>                                        
+                                        <DataGridTextColumn Header="Release" Width="100" Binding="{Binding Release}"/>
                                     </DataGrid.Columns>
-                               </DataGrid>
+                                </DataGrid>
                             </avalonDock:LayoutAnchorable>
                         </avalonDock:LayoutDocumentPane>
                     </avalonDock:LayoutPanel>

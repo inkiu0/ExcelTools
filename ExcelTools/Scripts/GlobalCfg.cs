@@ -266,11 +266,12 @@ namespace ExcelTools.Scripts
         {
             Dictionary<string, Dictionary<int, string>> applyedRows = currentLuaTableData.applyedRows;
             table bt = currentLuaTableData.tables[branchIdx + 1];//branch table
-            if(bt == null)
+            tablediff btd = currentLuaTableData.tableDiffs[branchIdx];//branch tablediff
+            if (bt == null)
             {
                 return;
             }
-            bt.Cancel(item.ID);
+            btd.Cancel(item.ID, bt);
             int index = currentLuaTableData.idList.IndexOf(item);
             _lTableDataDic[currentExcelpath].idList[index].SetStates(applyedRows[item.ID][branchIdx], branchIdx);
             applyedRows[item.ID][branchIdx] = "";
