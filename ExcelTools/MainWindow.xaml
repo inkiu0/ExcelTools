@@ -72,13 +72,13 @@
                             <avalonDock:LayoutAnchorable CanClose="False" CanFloat="False" CanHide="False" CanAutoHide="False">
                                 <DataGrid x:Name="propertyDataGrid" ItemsSource="{Binding}" AutoGenerateColumns="False" IsReadOnly="True">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="字段名" Width="100" Binding="{Binding PropertyName}"/>
-                                        <DataGridTextColumn Header="英文名" Width="80" Binding="{Binding EnName}"/>
-                                        <DataGridTextColumn Header="本地内容" Width="165" Binding="{Binding Context}"/>
-                                        <DataGridTextColumn Header="Trunk" Width="100" Binding="{Binding Trunk}"/>
-                                        <DataGridTextColumn Header="Studio" Width="100" Binding="{Binding Studio}"/>
-                                        <DataGridTextColumn Header="TF" Width="100" Binding="{Binding TF}"/>
-                                        <DataGridTextColumn Header="Release" Width="100" Binding="{Binding Release}"/>
+                                        <DataGridTextColumn Header="字段名" Width="100" Binding="{Binding PropertyName}" CanUserSort="False"/>
+                                        <DataGridTextColumn Header="英文名" Width="80" Binding="{Binding EnName}" CanUserSort="False"/>
+                                        <DataGridTextColumn Header="本地内容" Width="165" Binding="{Binding Context}" CanUserSort="False"/>
+                                        <DataGridTextColumn Header="Trunk" Width="100" Binding="{Binding Trunk}" CanUserSort="False"/>
+                                        <DataGridTextColumn Header="Studio" Width="100" Binding="{Binding Studio}" CanUserSort="False"/>
+                                        <DataGridTextColumn Header="TF" Width="100" Binding="{Binding TF}" CanUserSort="False"/>
+                                        <DataGridTextColumn Header="Release" Width="100" Binding="{Binding Release}" CanUserSort="False"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </avalonDock:LayoutAnchorable>

@@ -32,7 +32,7 @@ public class SVNHelper
     /// <summary>
     /// 锁定文件，一次只允许锁一个文件
     /// </summary>
-    public static bool Lock(string path,string message = null)
+    private static bool SVNLock(string path,string message = null)
     {
         string arguments = "lock -m " + "\"" + message + "\" " + path;
         string info = CommandHelper.ExcuteCommand("svn", arguments, true);
@@ -47,7 +47,7 @@ public class SVNHelper
         }
     }
 
-    public static void ReleaseLock(string path)
+    private static void SVNReleaseLock(string path)
     {
         string arguments = "unlock " + path;
         CommandHelper.ExcuteCommand("svn", arguments);
@@ -127,7 +127,7 @@ public class SVNHelper
             bool issame = true;
             if (kv.Value[1] == STATE_LOCKED)
             {
-                islock = IsLockAll(excelName);
+                GlobalCfg.Instance.LockedPaths.Add(kv.Key);
             }
             if (kv.Value[0] != "") {
                 issame = false;
@@ -190,6 +190,7 @@ public class SVNHelper
         if (!File.Exists(exlpath))
             return false;
         List<string> paths = GetAllPaths(Path.GetFileNameWithoutExtension(exlpath));
+        paths.Add(exlpath);
         Stack<string> haslockPaths = new Stack<string>();
         for (int i = 0; i < paths.Count; i++)
         {
@@ -222,7 +223,7 @@ public class SVNHelper
         //未成功进入编辑状态，释放锁
         for(int i = 0; i < haslockPaths.Count; i++)
         {
-            ReleaseLock(haslockPaths.Pop());
+            Release(haslockPaths.Pop());
         }
 
         return false;
@@ -237,6 +238,50 @@ public class SVNHelper
         return paths;
     }
 
+    #endregion
+
+    #region 加锁解锁的复合操作
+    public static bool Lock(string path , string message = null)
+    {
+        if (SVNLock(path, message))
+        {
+            GlobalCfg.Instance.LockedPaths.Add(path);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public static void Release(string path)
+    {
+        if (GlobalCfg.Instance.LockedPaths.Contains(path))
+        {
+            SVNReleaseLock(path);
+            GlobalCfg.Instance.LockedPaths.Remove(path);
+        }
+    }
+
+    public static void ReleaseAll()
+    {
+        int pathNm = GlobalCfg.Instance.LockedPaths.Count;
+        for (int i = 0; i < pathNm; i++)
+        {
+            Release(GlobalCfg.Instance.LockedPaths[0]);
+        }
+    }
+
+    //释放与一个Excel相关的所以文件
+    public static void ReleaseExcelRelative(string exlpath)
+    {
+        List<string> paths = GetAllPaths(Path.GetFileNameWithoutExtension(exlpath));
+        paths.Add(exlpath);
+        for(int i = 0; i < paths.Count; i++)
+        {
+            Release(paths[i]);
+        }
+    }
     #endregion
 
     /// <summary>

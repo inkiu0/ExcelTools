@@ -78,6 +78,7 @@ namespace ExcelTools.Scripts
         {
             _ExcelDic = new Dictionary<string, Excel>();
             _lTableDataDic = new Dictionary<string, LuaTableData>();
+            LockedPaths = new List<string>();
         }
 
         //所有表格的解析都存在这里
@@ -85,6 +86,8 @@ namespace ExcelTools.Scripts
         private Dictionary<string, Excel> _ExcelDic;
 
         private Dictionary<string, LuaTableData> _lTableDataDic;
+
+        public List<string> LockedPaths;
 
         public Excel GetParsedExcel(string path, bool reParse = false)
         {

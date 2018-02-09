@@ -67,6 +67,7 @@ namespace ExcelTools
             propertyDataGrid.SelectionUnit = DataGridSelectionUnit.Cell;
             #endregion
             GetRevision();
+            CheckStateBtn_Click(null, null);
 
             GenBtns = new List<Button>()
             {
@@ -326,10 +327,13 @@ namespace ExcelTools
                     {
                         _listItemChoosed.IsEditing = false;
                     }
+                    JudgeMultiFuncBtnState();
                     ResetGenBtnEnable();
                     break;
                 case STATE_FINISH_EDIT:
                     //TODO:执行操作
+                    ReleaseExcelRelative(_listItemChoosed.FilePath);
+                    _listItemChoosed.IsEditing = false;
                     break;
                 default:
                     break;
@@ -400,6 +404,7 @@ namespace ExcelTools
             //do my stuff before closing
             FileUtil.DeleteHiddenFile(new List<string> { GlobalCfg.SourcePath + "/.." }, _Ext);
             FileUtil.DeleteHiddenFile(new List<string> { GlobalCfg.SourcePath + "/.." }, ".txt");
+            ReleaseAll();
             base.OnClosing(e);
         }
 
