@@ -193,6 +193,7 @@ namespace ExcelTools
             propertyDataGrid.ItemsSource = fieldList;
             ResetGenBtnState();
 
+            //刷新单元格颜色
             for (int j = 0; j < GlobalCfg.BranchCount; j++) {
                 tablerowdiff trd = GlobalCfg.Instance.GetCellAllStatus(item.ID, j);
                 if (trd == null) {
@@ -206,12 +207,12 @@ namespace ExcelTools
                     if (trd.modifiedcells != null && trd.addedcells.ContainsKey(fieldList[a].EnName))
                     {
                         DataGridCell dataGridCell = GetCell(propertyDataGrid, a, j + 3);
-                        dataGridCell.Background = Brushes.LightGreen;
+                        dataGridCell.Background = Brushes.LightPink;
                     }
                     if (trd.modifiedcells != null && trd.deletedcells.ContainsKey(fieldList[a].EnName))
                     {
                         DataGridCell dataGridCell = GetCell(propertyDataGrid, a, j + 3);
-                        dataGridCell.Background = Brushes.LightPink;
+                        dataGridCell.Background = Brushes.LightBlue;
                     }
                 }
             }
@@ -286,6 +287,7 @@ namespace ExcelTools
                     _ExcelFiles[i].Paths.Clear();
                 }
             }
+            JudgeMultiFuncBtnState();
             #region 插入deleted文件(已注释)
             //foreach (KeyValuePair<string, string[]> kv in statusDic)
             //{
@@ -311,6 +313,7 @@ namespace ExcelTools
             {
                 case STATE_UPDATE:
                     SVNHelper.Update(_Folders[0], _Folders[1]);
+                    GlobalCfg.Instance.Clear();
                     GetRevision();
                     break;
                 case STATE_REVERT:
@@ -331,9 +334,12 @@ namespace ExcelTools
                     ResetGenBtnEnable();
                     break;
                 case STATE_FINISH_EDIT:
-                    //TODO:执行操作
+                    for (int i = 0; i < GlobalCfg.BranchCount; i++) {
+                        GlobalCfg.Instance.ExcuteModified(i);
+                    }
                     ReleaseExcelRelative(_listItemChoosed.FilePath);
                     _listItemChoosed.IsEditing = false;
+                    JudgeMultiFuncBtnState();
                     break;
                 default:
                     break;

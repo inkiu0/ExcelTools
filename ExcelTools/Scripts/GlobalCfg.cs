@@ -102,6 +102,12 @@ namespace ExcelTools.Scripts
             return _ExcelDic[path];
         }
 
+        public void Clear()
+        {
+            _ExcelDic.Clear();
+            _lTableDataDic.Clear();
+        }
+
         private LuaTableData InitLuaTableData(string excelpath)
         {
             if (!_lTableDataDic.ContainsKey(excelpath))
@@ -285,7 +291,6 @@ namespace ExcelTools.Scripts
         //根据目前选择的操作，修改配置文件
         public void ExcuteModified(int branchIdx)
         {
-            table lt = currentLuaTableData.tables[0];//local table
             table bt = currentLuaTableData.tables[branchIdx + 1];//branch table
             tablediff btd = currentLuaTableData.tableDiffs[branchIdx];//branch tablediff
             string tmp = bt.GenString(null, btd);
